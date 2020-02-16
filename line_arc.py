@@ -138,6 +138,12 @@ def line_line_intersect(line0, line1):
     # p = p0 + t*v0
     # q = q0 + s*v1
 
+    # If lines are co-linear
+    if Vector.cross(v1, v0) == 0:
+        # lines intersect everywhere
+        return p1
+
+        
     # solve for s and t when p and q are equal
     s = Vector.cross(v0, q0-p0)/Vector.cross(v1, v0)
     t = Vector.cross(v1, p0-q0)/Vector.cross(v0, v1)
