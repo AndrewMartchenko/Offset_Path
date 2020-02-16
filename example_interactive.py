@@ -10,6 +10,7 @@ WHITE = (1, 1, 1)
 RED = (0, 0, 1)
 GREEN = (0, 1, 0)
 DARK_GREEN = (0, 0.5, 0)
+YELLOW = (0, 1, 1)
 
 def draw_line(img, p0, p1, color=WHITE):
     y_offset = img.shape[0]-1
@@ -39,6 +40,8 @@ def draw_segments(img, segments, color=WHITE):
 
 GRID_SIZE = 20
 def draw_grid(img):
+    cv2.putText(img, text='(A)rc', org=(0,30), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
+    cv2.putText(img, text='(L)ine', org=(0,70), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
     img[::GRID_SIZE,::GRID_SIZE,:] = 0.5
 
             
