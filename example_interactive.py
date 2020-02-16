@@ -37,13 +37,17 @@ def draw_segments(img, segments, color=WHITE):
         elif is_arc(seg):
             draw_arc(img, *seg, color, 0.001)
 
+GRID_SIZE = 20
+def draw_grid(img):
+    img[::GRID_SIZE,::GRID_SIZE,:] = 0.5
+
             
 # Update key points on click
 def on_mouse(event, x, y, img, new_img, mode, path, offsets, guide):
 
-    grid_size = 20
-    x = round(x/grid_size)*grid_size
-    y = round(y/grid_size)*grid_size
+
+    x = round(x/GRID_SIZE)*GRID_SIZE
+    y = round(y/GRID_SIZE)*GRID_SIZE
     
     y_offset = img.shape[0]-1
     y = y_offset-y
@@ -74,7 +78,7 @@ def on_mouse(event, x, y, img, new_img, mode, path, offsets, guide):
         img[:,:,:] = 0
 
         # draw grid
-        img[::grid_size,::grid_size,:] = 0.5
+        draw_grid(img)
 
 
         draw_circle(img, xy, 5, WHITE)
@@ -126,7 +130,7 @@ def main():
     cv2.resizeWindow('Canvas', WINDOW_WIDTH, WINDOW_HEIGHT)
     img = np.zeros((WINDOW_HEIGHT, WINDOW_WIDTH, 3))
     new_img = np.zeros_like(img)
-
+    draw_grid(img)
 
     path = []
     offsets = []
