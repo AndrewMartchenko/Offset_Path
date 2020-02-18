@@ -62,51 +62,94 @@ def arc_clip(arc, q0, q2):
     
     return [q0, q1, q2]
 
-# Finds the intersect of a 3 point arc and a 3 point circle
+# # Finds the intersect of a 3 point arc and a 3 point circle
+# def arc_circ_intersect(arc, circ):
+#     p0, p1, p2 = arc
+#     ca, ra, a0, a1 = arc_from_points(arc)
+#     c, r, _, _ = arc_from_points(circ)
+
+#     p = lambda t: ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
+#     dpdt = lambda t: ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
+#     e = lambda t: r*r - Vector.dot(p(t)-c, p(t)-c)
+#     dedt = lambda t: -2*Vector.dot(dpdt(t), p(t)-c)
+                         
+#     t = newtons_method(0, e, dedt)
+    
+#     if t < 0 or t > 1:
+#         None
+#     else:
+#         return p(t)
+
+
+# # Returns first intersection point of line and circle
+# def line_circ_intersect(line, circ):
+#     p0, p1 = line
+#     c, r, a0, a1 = arc_from_points(circ)
+
+#     p = lambda t: p0+t*(p1-p0)
+#     dpdt = lambda t: p1-p0
+#     e = lambda t: r*r - Vector.dot(p(t)-c, p(t)-c)
+#     dedt = lambda t: -2*Vector.dot(dpdt(t), p(t)-c)
+                         
+#     t = newtons_method(0, e, dedt)
+
+#     if t < 0 or t > 1:
+#         None
+#     else:
+#         return p(t)
+
+# # Newton-Raphson method for finding roots of an function f with derivative df
+# # Algorithm will find only one root.
+# # x0 needs to be carefuly chosen so that alcorithm converges to correct solution
+# def newtons_method(x0, f, df):
+#     x = x0
+#     for i in range(10):
+#         x = x - f(x)/df(x)
+#     return x
+
+
+# This is the Non-"Functional" way to do the above
 def arc_circ_intersect(arc, circ):
     p0, p1, p2 = arc
     ca, ra, a0, a1 = arc_from_points(arc)
     c, r, _, _ = arc_from_points(circ)
+    
+    t = 0
+    for i in range(10):
 
-    p = lambda t: ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
-    dpdt = lambda t: ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
-    # e = lambda t: r*r - ((p(t)-c).dot(p(t)-c))
-    e = lambda t: r*r - Vector.dot(p(t)-c, p(t)-c)
-    dedt = lambda t: -2*Vector.dot(dpdt(t), p(t)-c)
-                         
-    t = newtons_method(0, e, dedt)
+        p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
+        dpdt =  ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
+        e =  r*r - Vector.dot(p-c, p-c)
+        dedt =  -2*Vector.dot(dpdt, p-c)
+        t = t - e/dedt
+
+    p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
     
     if t < 0 or t > 1:
         None
     else:
-        return p(t)
+        return p
 
 
-# Returns first intersection point of line and circle
 def line_circ_intersect(line, circ):
     p0, p1 = line
     c, r, a0, a1 = arc_from_points(circ)
+    t = 0
+    for i in range(10):
 
-    p = lambda t: p0+t*(p1-p0)
-    dpdt = lambda t: p1-p0
-    e = lambda t: r*r - Vector.dot(p(t)-c, p(t)-c)
-    dedt = lambda t: -2*Vector.dot(dpdt(t), p(t)-c)
-                         
-    t = newtons_method(0, e, dedt)
+        p = p0+t*(p1-p0)
+        dpdt = p1-p0
+        e = r*r - Vector.dot(p-c, p-c)
+        dedt = -2*Vector.dot(dpdt, p-c)
+        t = t - e/dedt
 
+    p = p0+t*(p1-p0)
+    
     if t < 0 or t > 1:
         None
     else:
-        return p(t)
+        return p
 
-# Newton-Raphson method for finding roots of an function f with derivative df
-# Algorithm will find only one root.
-# x0 needs to be carefuly chosen so that alcorithm converges to correct solution
-def newtons_method(x0, f, df):
-    x = x0
-    for i in range(10):
-        x = x - f(x)/df(x)
-    return x
 
 # Returns the first intersect of line and arc.
 # Note: search starts from line[0]
