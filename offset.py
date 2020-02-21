@@ -23,13 +23,13 @@ def join_offsets(path, offsets):
         if is_line(s0) and is_line(s1):
             pt = line_line_intersect(s0, s1)
             if pt:
-                s0[-1] = pt.copy()
+                s0[1] = pt.copy()
                 s1[0] = pt.copy()
                 
         if is_line(s0) and is_arc(s1):
-            pt = line_arc_intersect(s0[::-1], s1)
+            pt = line_arc_intersect([s0[1], s0[0]], s1)
             if pt:
-                s0[-1] = pt.copy()
+                s0[1] = pt.copy()
                 s1[:] = arc_clip(s1, pt.copy(), s1[2].copy())
             
         if is_arc(s0) and is_line(s1):
@@ -39,17 +39,24 @@ def join_offsets(path, offsets):
                 s0[:] = arc_clip(s0, s0[0].copy(), pt.copy())
 
         if is_arc(s0) and is_arc(s1):
-            pt = arc_arc_intersect(s0[::-1], s1)
+            pt = arc_arc_intersect([s0[2], s0[1], s0[0]], s1)
             if pt:
                 s0[:] = arc_clip(s0, s0[0].copy(), pt.copy())
                 s1[:] = arc_clip(s1, pt.copy(), s1[2].copy())
 
         if pt is None:
             # Draw arc between segments
-            p0 = s0[-1].copy()
+            if is_line(s0):
+                p0 = s0[1].copy() # if line, copy last point
+            else:
+                p0 = s0[2].copy() # if arc, copy last point
             p2 = s1[0].copy()
 
-            c = path[j][-1]
+            if is_line(path[j]):
+                c = path[j][1] # if jth segment is line, make center equal to last point
+            else:
+                c = path[j][2] # if jth segment is arc, make center equal to last point
+                
             r = (p0-c).length()
 
             m = (p0+p2)/2
