@@ -5,6 +5,11 @@ from vector import Vector
 from line_arc import *
 from offset import *
 
+LINE = 0
+ARC = 1
+
+WINDOW_HEIGHT = 600
+WINDOW_WIDTH = 800
 
 WHITE = (1, 1, 1)
 RED = (0, 0, 1)
@@ -46,106 +51,104 @@ def draw_grid(img):
 
             
 # Update key points on click
-def on_mouse(event, x, y, img, new_img, mode, path, offsets, guide):
+def on_mouse(event, x, y, model, view):
 
 
     x = round(x/GRID_SIZE)*GRID_SIZE
     y = round(y/GRID_SIZE)*GRID_SIZE
     
-    y_offset = img.shape[0]-1
+    y_offset = view.img.shape[0]-1
     y = y_offset-y
 
     xy = Vector(x, y)
 
-    new_img[:] = img[:]
+    view.new_img[:] = view.img[:]
     if event == cv2.EVENT_MOUSEMOVE:
 
         # Guide circle
-        draw_circle(new_img, xy, 5, RED)
+        draw_circle(view.new_img, xy, 5, RED)
 
-        if mode == LINE:
-            if len(guide) == 1:
-                draw_line(new_img, guide[0], xy, RED)
+        if view.mode == LINE:
+            if len(view.guide) == 1:
+                draw_line(view.new_img, view.guide[0], xy, RED)
         else:
-            if len(guide) == 1:
-                draw_line(new_img, guide[0], xy, RED)
-            elif len(guide) == 2:
-                if (guide[1].x != x) and (guide[1].y != y):
-                    draw_arc(new_img, guide[0], guide[1], xy, RED)
+            if len(view.guide) == 1:
+                draw_line(view.new_img, view.guide[0], xy, RED)
+            elif len(view.guide) == 2:
+                if (view.guide[1].x != x) and (view.guide[1].y != y):
+                    draw_arc(view.new_img, view.guide[0], view.guide[1], xy, RED)
 
 
-        cv2.imshow('Canvas', new_img)
+        cv2.imshow('Canvas', view.new_img)
 
     elif event == cv2.EVENT_LBUTTONDOWN:
 
-        img[:,:,:] = 0
+        view.img[:, :, :] = 0
 
         # draw grid
-        draw_grid(img)
+        draw_grid(view.img)
 
 
-        draw_circle(img, xy, 5, WHITE)
+        draw_circle(view.img, xy, 5, WHITE)
         
-        numel = len(guide)
-        if mode == LINE:
+        numel = len(view.guide)
+        if view.mode == LINE:
             if numel == 0:
-                guide.append(xy)
+                view.guide.append(xy)
             else:
-                path.append([guide[0], xy])
+                model.path.append([view.guide[0], xy])
 
-                guide[0] = xy
+                view.guide[0] = xy
 
-                offsets.append(offset_segment(path[-1], 30))
+                model.offsets.append(offset_segment(model.path[-1], 30))
 
 
         else:  # mode = ARC
             if numel < 2:
-                guide.append(xy)
+                view.guide.append(xy)
             else:
-                path.append([guide[0], guide[1], xy])
-                guide[0] = xy
-                del(guide[1])
-                offsets.append(offset_segment(path[-1], 30))
+                model.path.append([view.guide[0], view.guide[1], xy])
+                view.guide[0] = xy
+                del(view.guide[1])
+                model.offsets.append(offset_segment(model.path[-1], 30))
 
 
-        joined_offsets = join_offsets(path, offsets)
+        model.joined_offsets = join_offsets(model.path, model.offsets)
 
-        draw_segments(img, path, WHITE)
-        # draw_segments(img, offsets, DARK_GREEN)
-        draw_segments(img, joined_offsets, GREEN)
+        draw_segments(view.img, model.path, WHITE)
+        draw_segments(view.img, model.joined_offsets, GREEN)
 
+        cv2.imshow('Canvas', view.img)
+
+
+class Model():
+    def __init__(self, path=[], offsets=[], guide=[]):
+        self.path = path
+        self.offsets = offsets
+        self.joined_offsets = []
+    
+
+class View():
+    def __init__(self, width, height, mode=ARC, guide=[]):
+        self.img  = np.zeros((height, width, 3))
+        self.new_img = np.zeros_like(self.img)
+        draw_grid(self.img)
+        self.mode = mode
+        self.guide = guide   
         
-        cv2.imshow('Canvas', img)
 
-
-
-LINE = 0
-ARC = 1
-
-WINDOW_HEIGHT = 600
-WINDOW_WIDTH = 800
 def main():    
 
-    pw = 1165
-    pl = 1165
     cv2.namedWindow('Canvas', 0)
-
     cv2.resizeWindow('Canvas', WINDOW_WIDTH, WINDOW_HEIGHT)
-    img = np.zeros((WINDOW_HEIGHT, WINDOW_WIDTH, 3))
-    new_img = np.zeros_like(img)
-    draw_grid(img)
 
-    path = []
-    offsets = []
-    guide = []
+    model = Model()
+    view = View(WINDOW_WIDTH, WINDOW_HEIGHT)
+
     #           line      arc
     # path = [ (p0, p1), (p0, p1, p2), ... ]
     
-
-    mode = ARC
-    
-
-    cv2.setMouseCallback('Canvas', lambda event, x, y, flags, param: on_mouse(event, x, y, img, new_img, mode, path, offsets, guide))
+    cv2.setMouseCallback('Canvas', lambda event, x, y, flags, param: on_mouse(event, x, y, model, view))
 
     while True:
         # Break if Esc or 'q' is pressed
@@ -153,9 +156,16 @@ def main():
         if k == 27 or k == ord('q'):
             break
         elif k == ord('l'):
-            mode = LINE
+            view.mode = LINE
         elif k == ord('a'):
-            mode = ARC
+            view.mode = ARC
+        elif k == ord('c'):
+            # Close path
+            pass
+        elif k == ord('f'):
+            # Fill
+            pass
+
 
     cv2.destroyAllWindows()
 
