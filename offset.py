@@ -26,19 +26,19 @@ def join_offsets(path, offsets):
                 s0[1] = pt.copy()
                 s1[0] = pt.copy()
                 
-        if is_line(s0) and is_arc(s1):
+        elif is_line(s0) and is_arc(s1):
             pt = line_arc_intersect([s0[1], s0[0]], s1)
             if pt:
                 s0[1] = pt.copy()
                 s1[:] = arc_clip(s1, pt.copy(), s1[2].copy())
             
-        if is_arc(s0) and is_line(s1):
+        elif is_arc(s0) and is_line(s1):
             pt = line_arc_intersect(s1, s0)
             if pt:
                 s1[0] = pt.copy()
                 s0[:] = arc_clip(s0, s0[0].copy(), pt.copy())
 
-        if is_arc(s0) and is_arc(s1):
+        elif is_arc(s0) and is_arc(s1):
             pt = arc_arc_intersect([s0[2], s0[1], s0[0]], s1)
             if pt:
                 s0[:] = arc_clip(s0, s0[0].copy(), pt.copy())

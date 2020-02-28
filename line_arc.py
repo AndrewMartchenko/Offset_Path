@@ -12,7 +12,7 @@ def is_arc(seg):
 def copy_segment(seg):
     return [s.copy() for s in seg]
 
-# Returns andgle of point if it lies on the arc
+# Returns angle of point if it lies on the arc
 # otherwise returns None
 def pt_angle_on_arc(arc, pt):
     if pt is None:
@@ -26,6 +26,7 @@ def pt_angle_on_arc(arc, pt):
     err = 2*math.pi/1000
 
     a = (pt-c).angle()
+
     if a2 > a0:
         if a0-err <= a and a <= a2+err:
             return a
@@ -155,7 +156,7 @@ def line_circ_intersect(line, circ):
 # Note: search starts from line[0]
 def line_arc_intersect(line, arc):
     pt = line_circ_intersect(line, arc)
-    if pt_angle_on_arc(arc, pt):
+    if pt_angle_on_arc(arc, pt) is not None:
         return pt
     else:
         return None
@@ -164,7 +165,7 @@ def line_arc_intersect(line, arc):
 # Note: search starts from arc0[0]
 def arc_arc_intersect(arc0, arc1):
     pt = arc_circ_intersect(arc0, arc1)
-    if pt_angle_on_arc(arc1, pt):
+    if pt_angle_on_arc(arc1, pt) is not None:
         return pt
     else:
         return None
@@ -177,7 +178,7 @@ def line_line_intersect(line0, line1):
     v0 = p1-p0
     v1 = q1-q0
 
-    # Parrametric equations are for lines are
+    # Parrametric equations for lines are
     # p = p0 + t*v0
     # q = q0 + s*v1
 

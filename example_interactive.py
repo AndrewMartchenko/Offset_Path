@@ -4,6 +4,7 @@ import cv2
 from vector import Vector
 from line_arc import *
 from offset import *
+from fill import *
 
 LINE = 0
 ARC = 1
@@ -20,6 +21,10 @@ YELLOW = (0, 1, 1)
 def draw_line(img, p0, p1, color=WHITE):
     y_offset = img.shape[0]-1
     cv2.line(img, (round(p0.x), round(y_offset-p0.y)), (round(p1.x), round(y_offset-p1.y)), color=color)
+
+def draw_rect(img, p0, p1, color=WHITE):
+    y_offset = img.shape[0]-1
+    cv2.rectangle(img, (round(p0.x), round(y_offset-p0.y)) , (round(p1.x), round(y_offset-p1.y)), color=color)
 
 
 # This draws arcs more accurately than the opencv ellipse function
@@ -117,6 +122,10 @@ def on_mouse(event, x, y, model, view):
 
         draw_segments(view.img, model.path, WHITE)
         draw_segments(view.img, model.joined_offsets, GREEN)
+
+        bbox = path_bbox(model.joined_offsets)
+        if bbox:
+            draw_rect(view.img, bbox[0], bbox[1])
 
         cv2.imshow('Canvas', view.img)
 
