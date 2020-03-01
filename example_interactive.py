@@ -50,8 +50,8 @@ def draw_segments(img, segments, color=WHITE):
 
 GRID_SIZE = 20
 def draw_grid(img):
-    cv2.putText(img, text='(A)rc', org=(0,30), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
-    cv2.putText(img, text='(L)ine', org=(0,70), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
+    cv2.putText(img, text='(A)rc', org=(0, 30), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
+    cv2.putText(img, text='(L)ine', org=(0, 70), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
     img[::GRID_SIZE,::GRID_SIZE,:] = 0.5
 
             
@@ -105,7 +105,6 @@ def on_mouse(event, x, y, model, view):
 
                 view.guide[0] = xy
 
-                model.offsets.append(offset_segment(model.path[-1], 30))
 
 
         else:  # mode = ARC
@@ -115,10 +114,10 @@ def on_mouse(event, x, y, model, view):
                 model.path.append([view.guide[0], view.guide[1], xy])
                 view.guide[0] = xy
                 del(view.guide[1])
-                model.offsets.append(offset_segment(model.path[-1], 30))
 
 
-        model.joined_offsets = join_offsets(model.path, model.offsets)
+        model.joined_offsets = offset_path(model.path, 30)
+
 
         draw_segments(view.img, model.path, WHITE)
         draw_segments(view.img, model.joined_offsets, GREEN)
@@ -131,9 +130,8 @@ def on_mouse(event, x, y, model, view):
 
 
 class Model():
-    def __init__(self, path=[], offsets=[], guide=[]):
+    def __init__(self, path=[], guide=[]):
         self.path = path
-        self.offsets = offsets
         self.joined_offsets = []
     
 
@@ -143,7 +141,13 @@ class View():
         self.new_img = np.zeros_like(self.img)
         draw_grid(self.img)
         self.mode = mode
-        self.guide = guide   
+        self.guide = guide
+
+    def clear(self):
+        self.img[:,:,:]  = np.zeros_like(self.img)
+        self.new_img = np.zeros_like(self.img)
+        draw_grid(self.img)
+        self.guide = []
         
 
 def main():    
@@ -164,13 +168,16 @@ def main():
         k = cv2.waitKey(1) & 0xff
         if k == 27 or k == ord('q'):
             break
-        elif k == ord('l'):
+        elif k == ord('l'): # Line
             view.mode = LINE
-        elif k == ord('a'):
+        elif k == ord('a'): # Arc
             view.mode = ARC
-        elif k == ord('c'):
-            # Close path
-            pass
+        elif k == ord('d'): # Delete
+            view.clear()
+            model.path = []
+            model.joined_offsets = []
+            on_mouse(cv2.EVENT_MOUSEMOVE, 0, 0, model, view)
+
         elif k == ord('f'):
             # Fill
             pass

@@ -73,6 +73,8 @@ def join_offsets(path, offsets):
 
 def offset_segment(seg, dist):
 
+    # TODO: if last last point and first point are equlal, then assume that segments are joined
+
     if is_line(seg): # line
         p0, p1 = seg
 
@@ -109,10 +111,32 @@ def offset_segment(seg, dist):
         return [q0, q1, q2]
 
 def offset_path(path, dist):
+    closed_path = False
+    numel = len(path)
+    # If first point is equlal to last point
+    if (numel>1) and ((path[0][0]-path[-1][-1]).length() <= 0.001):
+        # Assume path is closed
+        closed_path = True
+        # Copy first segment and append to the end
+        # to make a smooth conection between start and end
+        path.append(copy_segment(path[0]))
     offsets = []
     for seg in path:
         offsets.append(offset_segment(seg, dist))
 
     joined_offsets = join_offsets(path, offsets)
+
+    if closed_path:
+        # copy the starting point of the last element back to the first element as it may have been cropped
+        joined_offsets[0][0] = joined_offsets[-1][0]
+
+        # Remove last segments as they are copies 
+        del(path[-1])
+        del(joined_offsets[-1])
+
+        # Note: the first segments could have been deleted above, however it is
+        # better to preserv segment order by copying the last element to the first position
+        # and deleting the last.
+
     return joined_offsets
 
