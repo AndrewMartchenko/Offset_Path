@@ -3,19 +3,73 @@ from vector import Vector
 from line_arc import *
 
 
-def fill(vec):
+def fill(path, vec, space):
+
+    if len(path) == 0:
+        return []
+    
+    tl, br = path_bbox(path)
+    
     # calculate bbox center
+    c = (tl+br)/2
+    
     # calculate bbox diagonal radius
+    r = (tl-c).length()
 
     # calculate tangent line to vector
+    u = vec.normal() # tangent unit vector
+    p0 = c-r*u # Start of line
+    p1 = c+r*u # End of line
 
+    dist = (p0-p1).length()
+
+    dt = space/dist # Parametric step size
+    groups = []
+    t = 0
+    while t <= 1:
+        print(t, dt)
+        # Calculate line parallel to vec
+        u = vec.norm()  # Unit vec
+
+        p = (p0+t*(p1-p0)) # Point on line p0-p1
+        q0 = p-r*u  # Start of vec line
+        q1 = p+r*u  # End of vec line
+
+        group = []
+        for seg in path:
+
+            if is_line(seg):
+                pt = line_line_intersect([q0, q1], seg)
+                if pt is not None:
+                    group.append(pt)
+            elif is_arc(seg):
+                pt1 = line_arc_intersect([q0, q1], seg)
+                pt2 = line_arc_intersect([q1, q0], seg)
+
+                if pt1 is not None:
+                    group.append(pt1)
+                
+                if pt2 is not None:
+                    if pt1 is None:
+                        group.append(pt2)
+                    elif (pt1-pt2).length()> 0.001:
+                        group.append(pt2)
+
+        print(group)
+        if len(group)>0:
+            groups.append(group)
+
+        t += dt
+
+    return groups
+    
     # for each line segment:
        # from bbox center move along the tangent line +/- diagonal radius, draw lines along vec and record intersects
        # order intersections 
        # pair up adjacent intersections and store their line segments
 
     # done
-    pass
+
 
 
 

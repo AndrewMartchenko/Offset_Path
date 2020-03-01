@@ -39,7 +39,7 @@ def draw_arc(img, p0, p1, p2, color=WHITE, step=0.01):
 
 def draw_circle(img, c, r, color=WHITE):
     y_offset = img.shape[0]-1
-    cv2.circle(img, (c.x, y_offset-c.y), r, RED)
+    cv2.circle(img, (round(c.x), round(y_offset-c.y)), r, color)
     
 def draw_segments(img, segments, color=WHITE):
     for seg in segments:
@@ -52,6 +52,8 @@ GRID_SIZE = 20
 def draw_grid(img):
     cv2.putText(img, text='(A)rc', org=(0, 30), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
     cv2.putText(img, text='(L)ine', org=(0, 70), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
+    cv2.putText(img, text='(D)elete', org=(0, 110), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
+    cv2.putText(img, text='(Q)uit', org=(0, 150), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
     img[::GRID_SIZE,::GRID_SIZE,:] = 0.5
 
             
@@ -122,9 +124,19 @@ def on_mouse(event, x, y, model, view):
         draw_segments(view.img, model.path, WHITE)
         draw_segments(view.img, model.joined_offsets, GREEN)
 
-        bbox = path_bbox(model.joined_offsets)
-        if bbox:
-            draw_rect(view.img, bbox[0], bbox[1])
+        # bbox = path_bbox(model.joined_offsets)
+        # if bbox:
+            # draw_rect(view.img, bbox[0], bbox[1])
+
+        groups = fill(model.joined_offsets, Vector(1,1), 20)
+
+        # print(groups)
+        for group in groups:
+            num_pts = len(group)
+            if num_pts > 1:
+                for i in range(num_pts-1):
+                    draw_line(view.img, group[i], group[i+1], YELLOW)
+
 
         cv2.imshow('Canvas', view.img)
 
