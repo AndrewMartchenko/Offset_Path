@@ -1,6 +1,7 @@
 from vector import Vector
-from line_arc import *
-from offset import *
+# from line_arc import *
+from offset import offset_path
+from fill import fill
 
 # if __name__ == '__main__':
 if True:
@@ -18,9 +19,13 @@ if True:
     # Create the offset path
     joined_offsets = offset_path(path, 20)
 
+
+
+
+
     print(len(joined_offsets))
 
-    # Result will be:
+    # Result will be a list of segments
     # joined_offsets = [
     #     [Vector(80.0, 100.0), Vector(80.0, 300.0)],
     #     [Vector(80.0, 300.0), Vector(88.3, 316.2), Vector(106.3, 318.9)],
@@ -32,3 +37,13 @@ if True:
     #       added for to smooth out exterior angle.
 
 
+    fill_lines = fill(joined_offsets, vec=Vector(1,1), space=20)
+
+    # Result will be a list of lines:
+    # fill_lines = [
+    #     [Vector(80.0, 193.7), Vector(213.7, 327.4)],
+    #     [Vector(80.0, 222.0), Vector(171.5, 313.5)],
+    #     [Vector(80.0, 250.2), Vector(141.8, 312.1)],
+    #     [Vector(80.0, 278.5), Vector(117.2, 315.8)],
+    #     [Vector(82.1, 309.0), Vector( 91.0, 317.8)]
+    #              ]

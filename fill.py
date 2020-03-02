@@ -24,7 +24,6 @@ def fill(path, vec, space):
     dist = (p0-p1).length()
 
     dt = space/dist # Parametric step size
-    print('dt', dt)
     fill_lines = []
     t = 0
     while t <= 1:
