@@ -24,10 +24,10 @@ def fill(path, vec, space):
     dist = (p0-p1).length()
 
     dt = space/dist # Parametric step size
-    groups = []
+    print('dt', dt)
+    fill_lines = []
     t = 0
     while t <= 1:
-        print(t, dt)
         # Calculate line parallel to vec
         u = vec.norm()  # Unit vec
 
@@ -35,42 +35,58 @@ def fill(path, vec, space):
         q0 = p-r*u  # Start of vec line
         q1 = p+r*u  # End of vec line
 
-        group = []
+        points = []
+        params = []
         for seg in path:
 
             if is_line(seg):
-                pt = line_line_intersect([q0, q1], seg)
-                if pt is not None:
-                    group.append(pt)
+                pt, t0 = line_line_intersect([q0, q1], seg)
+                if t0 is not None:
+                    points.append(pt)
+                    params.append(t0)
             elif is_arc(seg):
-                pt1 = line_arc_intersect([q0, q1], seg)
-                pt2 = line_arc_intersect([q1, q0], seg)
+                pt1, t1 = line_arc_intersect([q0, q1], seg)
+                pt2, t2 = line_arc_intersect([q1, q0], seg)
 
-                if pt1 is not None:
-                    group.append(pt1)
+                # Line was passed in in reverse order, so true paremetric value is obtained by subtracting from 1.0 
+                if t2 is not None:
+                    t2 = 1-t2
+
+                if t1 is not None:
+                    points.append(pt1)
+                    params.append(t1)
+
+                if t2 is not None:
+                    if t1 is None:
+                        points.append(pt2)
+                        params.append(t2)
+                    elif abs(t1-t2)> 0.001:
+                        points.append(pt2)
+                        params.append(t2)
+
+
+        # Do some dark python magic
+        
+        # Determine params index order 
+        indexes = sorted(range(len(params)), key=lambda k: params[k])
+        
+        # Sort points order of params
+        sorted_points = [points[i] for i in indexes]
+
+
+        # Group adjacent fill_lines to form lines
+        num_elements = len(sorted_points)
+        num_fill_lines = (num_elements//2) # // is an integer divide in python 7//2 = 3
+        N = num_fill_lines*2 # number of elements not including last (odd) element
+
+        # Iterate over pairs of sorted points and group them to make a list of lines
+        for i in range(0, N-1, 2):
+            fill_lines.append([sorted_points[i], sorted_points[i+1]]) 
                 
-                if pt2 is not None:
-                    if pt1 is None:
-                        group.append(pt2)
-                    elif (pt1-pt2).length()> 0.001:
-                        group.append(pt2)
-
-        print(group)
-        if len(group)>0:
-            groups.append(group)
 
         t += dt
 
-    return groups
-    
-    # for each line segment:
-       # from bbox center move along the tangent line +/- diagonal radius, draw lines along vec and record intersects
-       # order intersections 
-       # pair up adjacent intersections and store their line segments
-
-    # done
-
-
+    return fill_lines
 
 
 # Returns bounding box of a line

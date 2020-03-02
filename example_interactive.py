@@ -128,15 +128,11 @@ def on_mouse(event, x, y, model, view):
         # if bbox:
             # draw_rect(view.img, bbox[0], bbox[1])
 
-        groups = fill(model.joined_offsets, Vector(1,1), 20)
+        fill_lines = fill(model.joined_offsets, Vector(1,1), 20)
 
-        # print(groups)
-        for group in groups:
-            num_pts = len(group)
-            if num_pts > 1:
-                for i in range(num_pts-1):
-                    draw_line(view.img, group[i], group[i+1], YELLOW)
 
+        for line in fill_lines:
+            draw_line(view.img, line[0], line[1], YELLOW)
 
         cv2.imshow('Canvas', view.img)
 

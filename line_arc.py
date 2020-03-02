@@ -127,9 +127,9 @@ def arc_circ_intersect(arc, circ):
     p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
     
     if t < 0 or t > 1:
-        None
+        return (None, None)
     else:
-        return p
+        return (p, t)
 
 
 def line_circ_intersect(line, circ):
@@ -147,28 +147,28 @@ def line_circ_intersect(line, circ):
     p = p0+t*(p1-p0)
     
     if t < 0 or t > 1:
-        None
+        return (None, None)
     else:
-        return p
+        return (p, t)
 
 
 # Returns the first intersect of line and arc.
 # Note: search starts from line[0]
 def line_arc_intersect(line, arc):
-    pt = line_circ_intersect(line, arc)
+    pt, t = line_circ_intersect(line, arc)
     if pt_angle_on_arc(arc, pt) is not None:
-        return pt
+        return (pt, t)
     else:
-        return None
+        return (None, None)
      
 # Returns the first intersect of arc0 and arc1.
 # Note: search starts from arc0[0]
 def arc_arc_intersect(arc0, arc1):
-    pt = arc_circ_intersect(arc0, arc1)
+    pt, t = arc_circ_intersect(arc0, arc1)
     if pt_angle_on_arc(arc1, pt) is not None:
-        return pt
+        return (pt, t)
     else:
-        return None
+        return (None, None)
 
 # Intersection of two line segments 
 def line_line_intersect(line0, line1):
@@ -185,7 +185,7 @@ def line_line_intersect(line0, line1):
     # If lines are co-linear
     if Vector.cross(v1, v0) == 0:
         # lines intersect everywhere
-        return p1
+        return (p1, 1) # Not sure if we should return the end point on line0 when lines are co-linear
 
         
     # solve for s and t when p and q are equal
@@ -193,9 +193,9 @@ def line_line_intersect(line0, line1):
     t = Vector.cross(v1, p0-q0)/Vector.cross(v0, v1)
 
     if 0<=t and t<=1 and 0<=s and s<=1:
-        return p0 + t*v0
+        return (p0+t*v0, t)
     else:
-        return None
+        return (None, None)
 
 # Calculates center of a 3 point circle
 def center3(p0, p1, p2):
