@@ -5,6 +5,7 @@ from vector import Vector
 from line_arc import *
 from offset import *
 from fill import *
+import time
 
 LINE = 0
 ARC = 1
@@ -90,10 +91,7 @@ def on_mouse(event, x, y, model, view):
 
     elif event == cv2.EVENT_LBUTTONDOWN:
 
-        view.img[:, :, :] = 0
-
-        # draw grid
-        draw_grid(view.img)
+        
 
 
         draw_circle(view.img, xy, 5, WHITE)
@@ -118,6 +116,13 @@ def on_mouse(event, x, y, model, view):
                 del(view.guide[1])
 
 
+
+    if event == "redraw" or event == cv2.EVENT_LBUTTONDOWN:
+
+        view.img[:, :, :] = 0
+        # draw grid
+        draw_grid(view.img)
+        
         model.joined_offsets = offset_path(model.path, 30)
 
 
@@ -128,8 +133,11 @@ def on_mouse(event, x, y, model, view):
         # if bbox:
             # draw_rect(view.img, bbox[0], bbox[1])
 
-        fill_lines = fill(model.joined_offsets, Vector(1,1), 20)
+        vec = Vector(math.cos(model.angle), math.sin(model.angle))
+        fill_lines = fill(model.joined_offsets, vec, model.space)
 
+        # Print path to avoid having to draw one every time.
+        # print(model.path)
 
         for line in fill_lines:
             draw_line(view.img, line[0], line[1], YELLOW)
@@ -141,6 +149,8 @@ class Model():
     def __init__(self, path=[], guide=[]):
         self.path = path
         self.joined_offsets = []
+        self.angle = math.pi/4
+        self.space = 5
     
 
 class View():
@@ -156,7 +166,13 @@ class View():
         self.new_img = np.zeros_like(self.img)
         draw_grid(self.img)
         self.guide = []
-        
+
+# Key codes
+UP_KEY = 2490368
+DOWN_KEY = 2621440
+LEFT_KEY = 2424832
+RIGHT_KEY =  2555904
+
 
 def main():    
 
@@ -164,6 +180,8 @@ def main():
     cv2.resizeWindow('Canvas', WINDOW_WIDTH, WINDOW_HEIGHT)
 
     model = Model()
+    model.path = [[Vector(140, 179), Vector(60, 219), Vector(180, 279)], [Vector(180, 279), Vector(340, 239)], [Vector(340, 239), Vector(260, 479)], [Vector(260, 479), Vector(400, 359)], [Vector(400, 359), Vector(540, 339), Vector(560, 459)], [Vector(560, 459), Vector(680, 439), Vector(700, 279)], [Vector(700, 279), Vector(640, 99)], [Vector(640, 99), Vector(560, 159)], [Vector(560, 159), Vector(580, 219)], [Vector(580, 219), Vector(460, 259)], [Vector(460, 259), Vector(380, 99)], [Vector(380, 99), Vector(220, 39)], [Vector(220, 39), Vector(140, 179)]]
+    
     view = View(WINDOW_WIDTH, WINDOW_HEIGHT)
 
     #           line      arc
@@ -171,9 +189,12 @@ def main():
     
     cv2.setMouseCallback('Canvas', lambda event, x, y, flags, param: on_mouse(event, x, y, model, view))
 
+    on_mouse("redraw", 0, 0, model, view)
+    
     while True:
         # Break if Esc or 'q' is pressed
-        k = cv2.waitKey(1) & 0xff
+        # k = cv2.waitKey(30) & 0xff
+        k = cv2.waitKeyEx(30)
         if k == 27 or k == ord('q'):
             break
         elif k == ord('l'): # Line
@@ -184,14 +205,28 @@ def main():
             view.clear()
             model.path = []
             model.joined_offsets = []
-            on_mouse(cv2.EVENT_MOUSEMOVE, 0, 0, model, view)
+            on_mouse("redraw", 0, 0, model, view)
 
-        elif k == ord('f'):
-            # Fill
-            pass
+        elif k == UP_KEY:
+            model.space += 1
+            on_mouse("redraw", 0, 0, model, view)
+            # time.sleep(0.1)
+        elif k == DOWN_KEY:
+            if model.space > 0:
+                model.space -= 1
+            on_mouse("redraw", 0, 0, model, view)
+        elif k == LEFT_KEY:
+            model.angle += 2*math.pi/100
+            on_mouse("redraw", 0, 0, model, view)
+        elif k == RIGHT_KEY:
+            model.angle -= 2*math.pi/100
+            on_mouse("redraw", 0, 0, model, view)
+
 
 
     cv2.destroyAllWindows()
 
 if True:# __name__ == '__main__':
     main()
+
+
