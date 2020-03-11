@@ -137,7 +137,7 @@ def on_mouse(event, x, y, model, view):
         fill_lines = fill(model.joined_offsets, vec, model.space)
 
         # Print path to avoid having to draw one every time.
-        # print(model.path)
+        print(model.path)
 
         for line in fill_lines:
             draw_line(view.img, line[0], line[1], YELLOW)
