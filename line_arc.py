@@ -3,6 +3,10 @@ from vector import Vector
 
 MAX_ERROR = 0.001
 
+NUM_ITER = 20
+
+
+
 
 def is_line(seg):
     if len(seg)==2:
@@ -23,24 +27,22 @@ def pt_angle_on_arc(arc, pt):
     
     c, r, a0, a2 = arc_from_points(arc)
 
-    if abs((pt-c).length()-r)>MAX_ERROR:
+    if abs((pt-c).length()-r) > MAX_ERROR:
         return None
 
-    # err = 2*math.pi/10
-    err = 0 ## Strange. That it is less accurate to alow for some error. Need to check
     a = (pt-c).angle()
 
     if a2 > a0:
-        if a0-err <= a and a <= a2+err:
+        if a0<= a and a <= a2:
             return a
         a += 2*math.pi
-        if a0-err <= a and a <= a2+err:
+        if a0 <= a and a <= a2:
             return a
     else:
-        if a2-err <= a and a <= a0+err:
+        if a2 <= a and a <= a0:
             return a
         a += 2*math.pi
-        if a2-err <= a and a <= a0+err:
+        if a2 <= a and a <= a0:
             return a
         
     return None
@@ -119,7 +121,7 @@ def arc_circ_intersect(arc, circ):
     c, r, _, _ = arc_from_points(circ)
     
     t = 0
-    for i in range(20):
+    for i in range(NUM_ITER):
 
         p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
         dpdt =  ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
@@ -139,7 +141,7 @@ def line_circ_intersect(line, circ):
     p0, p1 = line
     c, r, a0, a1 = arc_from_points(circ)
     t = 0
-    for i in range(20):
+    for i in range(NUM_ITER):
 
         p = p0+t*(p1-p0)
         dpdt = p1-p0
