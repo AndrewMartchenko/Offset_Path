@@ -1,7 +1,7 @@
 import math
 from vector import Vector
 
-epsilon = 0.0001
+MAX_ERROR = 0.001
 
 
 def is_line(seg):
@@ -23,7 +23,7 @@ def pt_angle_on_arc(arc, pt):
     
     c, r, a0, a2 = arc_from_points(arc)
 
-    if abs((pt-c).length()-r)>epsilon:
+    if abs((pt-c).length()-r)>MAX_ERROR:
         return None
 
     # err = 2*math.pi/10
@@ -129,7 +129,7 @@ def arc_circ_intersect(arc, circ):
 
     p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
     
-    if t < 0-epsilon or t > 1+epsilon:
+    if t < 0 or t > 1:
         return (None, None)
     else:
         return (p, t)
@@ -149,7 +149,7 @@ def line_circ_intersect(line, circ):
 
     p = p0+t*(p1-p0)
     
-    if t < 0-epsilon or t > 1+epsilon:
+    if t < 0 or t > 1:
         return (None, None)
     else:
         return (p, t)
@@ -195,7 +195,7 @@ def line_line_intersect(line0, line1):
     s = Vector.cross(v0, q0-p0)/Vector.cross(v1, v0)
     t = Vector.cross(v1, p0-q0)/Vector.cross(v0, v1)
 
-    if 0-epsilon<=t and t<=1+epsilon and 0-epsilon<=s and s<=1+epsilon:
+    if 0<=t and t<=1 and 0<=s and s<=1:
         return (p0+t*v0, t)
     else:
         return (None, None)
@@ -307,7 +307,7 @@ def is_pt_on_line(line, pt):
     u = b.norm()
     s = Vector.dot(a, u)
 
-    if abs(s-a.length()) < epsilon:
+    if abs(s-a.length()) < MAX_ERROR:
         return True
     else:
         return False
