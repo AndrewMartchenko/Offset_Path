@@ -1,6 +1,9 @@
 import math
 from vector import Vector
 
+epsilon = 0.0001
+
+
 def is_line(seg):
     if len(seg)==2:
         return True
@@ -20,11 +23,11 @@ def pt_angle_on_arc(arc, pt):
     
     c, r, a0, a2 = arc_from_points(arc)
 
-    if abs((pt-c).length()-r)>0.001:
+    if abs((pt-c).length()-r)>epsilon:
         return None
 
-    err = 2*math.pi/1000
-
+    # err = 2*math.pi/10
+    err = 0 ## Strange. That it is less accurate to alow for some error. Need to check
     a = (pt-c).angle()
 
     if a2 > a0:
@@ -116,7 +119,7 @@ def arc_circ_intersect(arc, circ):
     c, r, _, _ = arc_from_points(circ)
     
     t = 0
-    for i in range(10):
+    for i in range(20):
 
         p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
         dpdt =  ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
@@ -126,7 +129,7 @@ def arc_circ_intersect(arc, circ):
 
     p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
     
-    if t < 0 or t > 1:
+    if t < 0-epsilon or t > 1+epsilon:
         return (None, None)
     else:
         return (p, t)
@@ -136,7 +139,7 @@ def line_circ_intersect(line, circ):
     p0, p1 = line
     c, r, a0, a1 = arc_from_points(circ)
     t = 0
-    for i in range(10):
+    for i in range(20):
 
         p = p0+t*(p1-p0)
         dpdt = p1-p0
@@ -146,7 +149,7 @@ def line_circ_intersect(line, circ):
 
     p = p0+t*(p1-p0)
     
-    if t < 0 or t > 1:
+    if t < 0-epsilon or t > 1+epsilon:
         return (None, None)
     else:
         return (p, t)
@@ -192,7 +195,7 @@ def line_line_intersect(line0, line1):
     s = Vector.cross(v0, q0-p0)/Vector.cross(v1, v0)
     t = Vector.cross(v1, p0-q0)/Vector.cross(v0, v1)
 
-    if 0<=t and t<=1 and 0<=s and s<=1:
+    if 0-epsilon<=t and t<=1+epsilon and 0-epsilon<=s and s<=1+epsilon:
         return (p0+t*v0, t)
     else:
         return (None, None)
@@ -304,7 +307,7 @@ def is_pt_on_line(line, pt):
     u = b.norm()
     s = Vector.dot(a, u)
 
-    if abs(s-a.length()) < 0.001:
+    if abs(s-a.length()) < epsilon:
         return True
     else:
         return False
