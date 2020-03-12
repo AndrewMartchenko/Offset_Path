@@ -44,8 +44,8 @@ def fill(path, vec, space):
                     points.append(pt)
                     params.append(t0)
             elif is_arc(seg):
-                pt1, t1 = line_arc_intersect([q0, q1], seg)
-                pt2, t2 = line_arc_intersect([q1, q0], seg)
+                pt1, t1 = line_segment_arc_intersect([q0, q1], seg)
+                pt2, t2 = line_segment_arc_intersect([q1, q0], seg)
 
                 # Line was passed in in reverse order, so true paremetric value is obtained by subtracting from 1.0 
                 if t2 is not None:

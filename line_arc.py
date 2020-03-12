@@ -132,6 +132,7 @@ def arc_circ_intersect(arc, circ):
     if (ca-c).length()+ra < r:
         return (None, None)
     
+    
     t = 0
     for i in range(NUM_ITER):
 
@@ -140,18 +141,26 @@ def arc_circ_intersect(arc, circ):
         e =  r*r - Vector.dot(p-c, p-c)
         dedt =  -2*Vector.dot(dpdt, p-c)
         t = t - e/dedt
-
-    p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
-    
+        
+    # If intersection is not on arc segment 
     if t < 0 or t > 1:
         return (None, None)
-    else:
-        return (p, t)
+    
+    p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
+
+    return (p, t)
 
 
 def line_circ_intersect(line, circ):
     p0, p1 = line
     c, r, a0, a1 = arc_from_points(circ)
+
+    dist = line_point_distance(line, c)
+
+    # if line and circ do not intersect
+    if dist > r:
+        return (None, None)
+    
     t = 0
     for i in range(NUM_ITER):
 
@@ -163,30 +172,55 @@ def line_circ_intersect(line, circ):
 
     p = p0+t*(p1-p0)
     
+
+    return (p, t)
+
+# Returns smallest distance from line to point
+def line_point_distance(line, pt):
+    p0, p1 = line
+    u = (p1-p0).normal()
+    return abs(Vector.dot(u, pt-p0))
+
+
+def line_segment_circ_intersect(line_seg, circ):
+    p, t = line_circ_intersect(line_seg, circ)
+    if t is None:
+        return (None, None)
     if t < 0 or t > 1:
         return (None, None)
-    else:
-        return (p, t)
 
+    return (p, t)
 
 # Returns the first intersect of line and arc.
 # Note: search starts from line[0]
-def line_arc_intersect(line, arc):
-    pt, t = line_circ_intersect(line, arc)
-    if pt_angle_on_arc(arc, pt) is not None:
-        return (pt, t)
-    else:
+def line_segment_arc_intersect(line_seg, arc):
+    pt, t = line_circ_intersect(line_seg, arc)
+    # If intersection is not on line segment
+    if t is None:
         return (None, None)
+    if t < 0 or t > 1:
+        return (None, None)
+    # If intersection is not on arc segment
+    if pt_angle_on_arc(arc, pt) is None:
+        return (None, None)
+
+    return (pt, t)
      
 # Returns the first intersect of arc0 and arc1.
 # Note: search starts from arc0[0]
 def arc_arc_intersect(arc0, arc1):
     pt, t = arc_circ_intersect(arc0, arc1)
-    if pt_angle_on_arc(arc1, pt) is not None:
-        return (pt, t)
-    else:
-        return (None, None)
 
+    # If both arcs were circles is their no intercection
+    if t is None:
+        return (None, None)
+    
+    # If intersection is not on arc1 segment
+    if pt_angle_on_arc(arc1, pt) is None:
+        return (None, None)
+    
+    return (pt, t)
+    
 # Intersection of two line segments 
 def line_line_intersect(line0, line1):
     p0, p1 = line0
@@ -291,11 +325,6 @@ def mirror_pt(line, pt):
     qt = g - v
     return qt
 
-# Returns smallest distance from line to point
-def line_point_distance(line, pt):
-    p0, p1 = line
-    u = (p1-p0).normal()
-    return abs(Vector.dot(u, pt-p0))
 
 def arc_point_distance(arc, pt):
     p0, p1, p2 = arc
