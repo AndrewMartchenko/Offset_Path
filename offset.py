@@ -2,6 +2,17 @@ import math
 from vector import Vector
 from line_arc import *
 
+
+# TODO:
+# 1.
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+
 def join_offsets(path, offsets):
 
     # copy segments
@@ -21,7 +32,7 @@ def join_offsets(path, offsets):
         s1 = joined_offsets[i+1]
 
         if is_line(s0) and is_line(s1):
-            pt, _ = line_line_intersect(s0, s1)
+            pt, _ = line_segment_intersect(s0, s1)
             if pt:
                 s0[1] = pt.copy()
                 s1[0] = pt.copy()

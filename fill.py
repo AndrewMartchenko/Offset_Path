@@ -39,7 +39,7 @@ def fill(path, vec, space):
         for seg in path:
 
             if is_line(seg):
-                pt, t0 = line_line_intersect([q0, q1], seg)
+                pt, t0 = line_segment_intersect([q0, q1], seg)
                 if t0 is not None:
                     points.append(pt)
                     params.append(t0)

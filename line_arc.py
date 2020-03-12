@@ -222,7 +222,7 @@ def arc_arc_intersect(arc0, arc1):
     return (pt, t)
     
 # Intersection of two line segments 
-def line_line_intersect(line0, line1):
+def line_intersect(line0, line1):
     p0, p1 = line0
     q0, q1 = line1
 
@@ -243,10 +243,16 @@ def line_line_intersect(line0, line1):
     s = Vector.cross(v0, q0-p0)/Vector.cross(v1, v0)
     t = Vector.cross(v1, p0-q0)/Vector.cross(v0, v1)
 
-    if 0<=t and t<=1 and 0<=s and s<=1:
-        return (p0+t*v0, t)
+    return (p0+t*v0, t, s)
+
+def line_segment_intersect(line_seg0, line_seg1):
+    pt, t, s = line_intersect(line_seg0, line_seg1)
+
+    if 0 <= t and t <= 1 and 0 <= s and s <= 1:
+        return pt, t
     else:
         return (None, None)
+
 
 # Calculates center of a 3 point circle
 def center3(p0, p1, p2):
