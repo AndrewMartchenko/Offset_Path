@@ -119,6 +119,18 @@ def arc_circ_intersect(arc, circ):
     p0, p1, p2 = arc
     ca, ra, a0, a1 = arc_from_points(arc)
     c, r, _, _ = arc_from_points(circ)
+
+    # If too far apart
+    if (ca-c).length() > ra+r:
+        return (None, None)
+
+    # If circle is inside arc
+    if (ca-c).length()+r < ra:
+        return (None, None)
+
+    # If arc is inside circle
+    if (ca-c).length()+ra < r:
+        return (None, None)
     
     t = 0
     for i in range(NUM_ITER):
