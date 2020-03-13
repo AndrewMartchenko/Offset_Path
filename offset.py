@@ -4,13 +4,14 @@ from line_arc import *
 
 
 # TODO:
-# 1.
+# Process
+# 1. extend disjoint offsets to intersect
+# 2. offset extended offsests back by small amount
+# 3. crop them to their intersection
+# 4. use these line segments as the temp new path
 # 
 # 
-# 
-# 
-# 
-# 
+#  Write function to add a unit line segment to the start/end of an arc
 # 
 
 def join_offsets(path, offsets):
@@ -63,10 +64,10 @@ def join_offsets(path, offsets):
                 p0 = s0[2].copy() # if arc, copy last point
             p2 = s1[0].copy()
 
-            if is_line(path[j]):
-                c = path[j][1] # if jth segment is line, make center equal to last point
+            if is_line(path[j][0]):
+                c = path[j][0][1] # if jth segment is line, make center equal to last point
             else:
-                c = path[j][2] # if jth segment is arc, make center equal to last point
+                c = path[j][0][2] # if jth segment is arc, make center equal to last point
                 
             r = (p0-c).length()
 
@@ -121,18 +122,18 @@ def offset_segment(seg, dist):
         
         return [q0, q1, q2]
 
-def offset_path(path, dist):
+def offset_path(path):
     closed_path = False
     numel = len(path)
     # If first point is equlal to last point
-    if (numel>1) and ((path[0][0]-path[-1][-1]).length() <= 0.001):
+    if (numel>1) and ((path[0][0][0]-path[-1][0][-1]).length() <= 0.001):
         # Assume path is closed
         closed_path = True
         # Copy first segment and append to the end
         # to make a smooth conection between start and end
-        path.append(copy_segment(path[0]))
+        path.append([copy_segment(path[0][0]), path[0][1]])
     offsets = []
-    for seg in path:
+    for seg, dist in path:
         offsets.append(offset_segment(seg, dist))
 
     joined_offsets = join_offsets(path, offsets)

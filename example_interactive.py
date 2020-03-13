@@ -7,6 +7,7 @@ from offset import *
 from fill import *
 import time
 
+
 LINE = 0
 ARC = 1
 
@@ -14,6 +15,7 @@ WINDOW_HEIGHT = 600
 WINDOW_WIDTH = 800
 
 WHITE = (1, 1, 1)
+GRAY = (0.5, 0.5, 0.5)
 RED = (0, 0, 1)
 GREEN = (0, 1, 0)
 DARK_GREEN = (0, 0.5, 0)
@@ -49,18 +51,42 @@ def draw_segments(img, segments, color=WHITE):
         elif is_arc(seg):
             draw_arc(img, *seg, color, 0.001)
 
+
+def draw_path(img, path, color=WHITE):
+    for seg, _ in path:
+        if is_line(seg):
+            draw_line(img, *seg, color)
+        elif is_arc(seg):
+            draw_arc(img, *seg, color, 0.001)
+            
 GRID_SIZE = 20
 def draw_grid(img):
-    cv2.putText(img, text='(A)rc', org=(0, 30), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
-    cv2.putText(img, text='(L)ine', org=(0, 70), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
-    cv2.putText(img, text='(D)elete', org=(0, 110), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
-    cv2.putText(img, text='(Q)uit', org=(0, 150), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=YELLOW)
+    y = 10
+    dy = 30
+    y += dy
+    cv2.putText(img, text='(A)rc', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
+    y += dy
+    cv2.putText(img, text='(L)ine', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
+    y += dy
+    cv2.putText(img, text='(P)lus Offset', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
+    y += dy
+    cv2.putText(img, text='(M)inus Offset', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
+    y += dy
+    cv2.putText(img, text='(D)elete', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
+    y += dy
+    cv2.putText(img, text='(Q)uit', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
     img[::GRID_SIZE,::GRID_SIZE,:] = 0.5
 
             
 # Update key points on click
 def on_mouse(event, x, y, model, view):
 
+    if x < 0 or y < 0:
+        x = view.old_x
+        y = view.old_y
+    else:
+        view.old_x = x
+        view.old_y = y
 
     x = round(x/GRID_SIZE)*GRID_SIZE
     y = round(y/GRID_SIZE)*GRID_SIZE
@@ -78,13 +104,22 @@ def on_mouse(event, x, y, model, view):
 
         if view.mode == LINE:
             if len(view.guide) == 1:
-                draw_line(view.new_img, view.guide[0], xy, RED)
+                guide = [view.guide[0], xy]
+                offset = offset_segment(guide, model.gap)
+                draw_line(view.new_img, guide[0], guide[1], GRAY)
+                draw_line(view.new_img, offset[0], offset[1], DARK_GREEN)
         else:
             if len(view.guide) == 1:
-                draw_line(view.new_img, view.guide[0], xy, RED)
+                guide = [view.guide[0], xy]
+                offset = offset_segment(guide, model.gap)
+                draw_line(view.new_img, guide[0], guide[1], GRAY)
+                draw_line(view.new_img, offset[0], offset[1], DARK_GREEN)
             elif len(view.guide) == 2:
                 if (view.guide[1].x != x) and (view.guide[1].y != y):
-                    draw_arc(view.new_img, view.guide[0], view.guide[1], xy, RED)
+                    guide = [view.guide[0], view.guide[1], xy]
+                    offset = offset_segment(guide, model.gap)
+                    draw_arc(view.new_img, guide[0], guide[1], guide[2], GRAY)
+                    draw_arc(view.new_img, offset[0], offset[1], offset[2], DARK_GREEN)
 
 
         cv2.imshow('Canvas', view.new_img)
@@ -101,7 +136,7 @@ def on_mouse(event, x, y, model, view):
             if numel == 0:
                 view.guide.append(xy)
             else:
-                model.path.append([view.guide[0], xy])
+                model.path.append([[view.guide[0], xy], model.gap])
 
                 view.guide[0] = xy
 
@@ -111,7 +146,7 @@ def on_mouse(event, x, y, model, view):
             if numel < 2:
                 view.guide.append(xy)
             else:
-                model.path.append([view.guide[0], view.guide[1], xy])
+                model.path.append([[view.guide[0], view.guide[1], xy], model.gap])
                 view.guide[0] = xy
                 del(view.guide[1])
 
@@ -123,10 +158,10 @@ def on_mouse(event, x, y, model, view):
         # draw grid
         draw_grid(view.img)
         
-        model.joined_offsets = offset_path(model.path, 30)
+        model.joined_offsets = offset_path(model.path)
 
 
-        draw_segments(view.img, model.path, WHITE)
+        draw_path(view.img, model.path, WHITE)
         draw_segments(view.img, model.joined_offsets, GREEN)
 
         # bbox = path_bbox(model.joined_offsets)
@@ -151,6 +186,7 @@ class Model():
         self.joined_offsets = []
         self.angle = math.pi/4
         self.space = 5
+        self.gap = 10 # Offset gap
     
 
 class View():
@@ -160,6 +196,8 @@ class View():
         draw_grid(self.img)
         self.mode = mode
         self.guide = guide
+        self.old_x = 0
+        self.old_y = 0
 
     def clear(self):
         self.img[:,:,:]  = np.zeros_like(self.img)
@@ -180,12 +218,24 @@ def main():
     cv2.resizeWindow('Canvas', WINDOW_WIDTH, WINDOW_HEIGHT)
 
     model = Model()
-    model.path = [[Vector(140, 179), Vector(60, 219), Vector(180, 279)], [Vector(180, 279), Vector(340, 239)], [Vector(340, 239), Vector(260, 479)], [Vector(260, 479), Vector(400, 359)], [Vector(400, 359), Vector(540, 339), Vector(560, 459)], [Vector(560, 459), Vector(680, 439), Vector(700, 279)], [Vector(700, 279), Vector(640, 99)], [Vector(640, 99), Vector(560, 159)], [Vector(560, 159), Vector(580, 219)], [Vector(580, 219), Vector(460, 259)], [Vector(460, 259), Vector(380, 99)], [Vector(380, 99), Vector(220, 39)], [Vector(220, 39), Vector(140, 179)]]
+    model.path = [[[Vector(140, 179), Vector(60, 219), Vector(180, 279)], 10],
+                  [[Vector(180, 279), Vector(340, 239)], 10],
+                  [[Vector(340, 239), Vector(260, 479)], 30],
+                  [[Vector(260, 479), Vector(400, 359)], 10],
+                  [[Vector(400, 359), Vector(540, 339), Vector(560, 459)], 10],
+                  [[Vector(560, 459), Vector(680, 439), Vector(700, 279)], 10],
+                  [[Vector(700, 279), Vector(640, 99)], 10],
+                  [[Vector(640, 99), Vector(560, 159)], 10],
+                  [[Vector(560, 159), Vector(580, 219)], 10],
+                  [[Vector(580, 219), Vector(460, 259)], 10],
+                  [[Vector(460, 259), Vector(380, 99)], 10],
+                  [[Vector(380, 99), Vector(220, 39)], 10],
+                  [[Vector(220, 39), Vector(140, 179)], 10]]
     
     view = View(WINDOW_WIDTH, WINDOW_HEIGHT)
 
-    #           line      arc
-    # path = [ (p0, p1), (p0, p1, p2), ... ]
+    #            line           arc
+    # path = [ [(p0, p1), d], [(p0, p1, p2), d], ... ]
     
     cv2.setMouseCallback('Canvas', lambda event, x, y, flags, param: on_mouse(event, x, y, model, view))
 
@@ -206,7 +256,13 @@ def main():
             model.path = []
             model.joined_offsets = []
             on_mouse("redraw", 0, 0, model, view)
-
+        elif k == ord('p'):  # plus
+            model.gap += 2
+            on_mouse(cv2.EVENT_MOUSEMOVE, -1, -1, model, view)
+        elif k == ord('m'):  # minus
+            if model.gap > 2:
+                model.gap -= 2
+            on_mouse(cv2.EVENT_MOUSEMOVE, -1, -1, model, view)
         elif k == UP_KEY:
             model.space += 1
             on_mouse("redraw", 0, 0, model, view)
