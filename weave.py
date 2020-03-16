@@ -129,9 +129,9 @@ if True:
     # Setup plot
     fig = plt.figure()
 
-    ax1 = fig.add_subplot(221)
-    ax2 = fig.add_subplot(222)
-    ax3 = fig.add_subplot(223)
+    ax1 = fig.add_subplot(211)
+    ax2 = fig.add_subplot(223)
+    ax3 = fig.add_subplot(224)
 
 
 
@@ -144,7 +144,7 @@ if True:
     dR = 2 # Dwell right length
 
     # Distance of weld weave
-    D = 200
+    D = 400
 
     x = []
     y = []
@@ -158,7 +158,7 @@ if True:
 
     # Make line plot
     ax1.plot(x, y, linewidth=1.0)
-    ax1.set(xlim=[0, D], ylim=[-D/2, D/2], aspect=1, adjustable='box')
+    ax1.set(xlim=[0, D], ylim=[-2*W, 2*W], aspect='equal', adjustable='box')
 
 
     ## LINE WEAVE EXAMPLE
