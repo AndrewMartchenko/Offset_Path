@@ -20,6 +20,11 @@ class Vector:
     def angle(self):
         return math.atan2(self.y, self.x)
 
+    def rotate(self, a):
+        c = math.cos(a)
+        s = math.sin(a)
+        return Vector(c*self.x-s*self.y, s*self.x+c*self.y)
+
     def tangent(self):
         return Vector(-self.y, self.x)
 
@@ -35,6 +40,16 @@ class Vector:
     def cross(lhs, rhs):
         return lhs.x*rhs.y-lhs.y*rhs.x
 
+    # Calculates the angle from v0 to v1
+    def angle2(v0, v1):
+        u0 = v0.norm()
+        u1 = v1.norm()
+        
+        # Calculate the direction of the angle
+        delta = 1.0 if Vector.cross(u0, u1) > 0.0 else 0.0
+        angle = math.acos(Vector.dot(u0, u1))*delta
+
+        return angle
     def copy(self):
         return Vector(self.x, self.y)
 
