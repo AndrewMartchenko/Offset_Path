@@ -2,26 +2,26 @@ from vector import Vector
 from line_arc import arc_from_points
 import math
 
-#         dL
-#       ------                                                         
-#     /:      :\                                                       
-#    / :      : \                                                     
-#   /  :      :  \                                                     
-#  /   :      :   \   dM                      dM                           
-# :    :      :    :------:    :      :    :------:                      
-# 0    a      b    c      d\   e      f   /g      h (or L)                
-#                           \  :      :  /                              
-#                            \ :      : /                               
-#                             \:      :/                                
-#                               ------
-#                                  dR
-def linear_weave(xx, L, W, dM, dL, dR):
+#             dL
+#  W......  ------                                                         
+#         /:      :\                                                       
+#        / :      : \                                                     
+#       /  :      :  \                                                     
+#      /   :      :   \   dM                      dM                           
+#  0..:    :      :    :------:    :      :    :------:                      
+#     0    a      b    c      d\   e      f   /g      h (or L)                
+#                               \  :      :  /                              
+#                                \ :      : /                               
+#                                 \:      :/                                
+#                                   ------
+#                                      dR
+def line_weave(x, L, W, dM, dL, dR):
 
     # Since function is periodic, calculate remainder
-    # which will map xx to into the first period as x
-    x = xx%L # modulus
+    # which will map x to into the first period as xx
+    xx = x % L # modulus
 
-    # Calculate values as per sketch above
+    # Calculate x values as per sketch above
     a = (L - (dM + dM + dL + dR))/4
     b = a + dL
     c = b + a
@@ -31,146 +31,143 @@ def linear_weave(xx, L, W, dM, dL, dR):
     g = f + a
     h = g + dM # or h = L
 
-    assert x >= 0, 'x should not be less than zero here.'
-    assert x <= h, 'x should not be greater than h here.'
+    assert xx >= 0, 'xx should not be less than zero here.'
+    assert xx <= h, 'xx should not be greater than h here.'
 
-    if x <= a:
-        frac = (x-0)/a
+    # Calculate y values as per plot
+    if xx <= a:
+        frac = (xx-0)/a
         return frac*W
-    elif x <= b:
+    elif xx <= b:
         return W
-    elif x <= c:
-        frac = (x-b)/a
+    elif xx <= c:
+        frac = (xx-b)/a
         return W - frac*W
-    elif x <= d:
+    elif xx <= d:
         return 0
-    elif x <= e:
-        frac = (x-d)/a
+    elif xx <= e:
+        frac = (xx-d)/a
         return -frac*W
-    elif x <= f:
+    elif xx <= f:
         return -W
-    elif x <= g:
-        frac = (x-f)/a
+    elif xx <= g:
+        frac = (xx-f)/a
         return -W + frac*W
-    elif x <= h:
+    elif xx <= h:
         return 0
 
     # Program should never get here
     return 0
 
 
-# xx is the distance along the circumfrance of the arc
-def arc_weave(xx, L, W, dM, dL, dR, arc):
+# x is the distance along the circumfrance of the arc
+def arc_weave(x, L, W, dM, dL, dR, arc):
     p0, p1, p2 = arc
 
 
-    # Calculate linear weave
-    y = linear_weave(xx, L, W, dM, dL, dR)
-
-    c, r, a0, a2 = arc_from_points(arc)
+    # Calculate line weave
+    y = line_weave(x, L, W, dM, dL, dR)
 
     # Map weave result onto arc
+    c, r, a0, a2 = arc_from_points(arc)
 
     # C = 2*pi*r
-    # frac = xx/C
+    # frac = x/C
     # angle = 2*pi*frac
     # which simplifies to:
-    angle = xx/r
+    angle = x/r
 
+    # Unit vector pointing to start of arc
     u = (p0-c).norm()
+
+    # Rotate unit vector to point to x
     if a0 < a2:
         v = u.rotate(angle)
     else:
         v = u.rotate(-angle)
 
+    # Stretch unit vector by r+y
     xy = (r+y)*v + c
-
     return xy
 
-
-
-
-## Test
-
-import matplotlib.pyplot as plt
-import numpy as np
-# import matplotlib.mlab as mlab
-# import matplotlib.gridspec as gridspec
-
-
-
-# x = np.arange(0, 300, 0.5)
-# y = np.zeros_like(x)
-# xa = []
-# ya = []
-
-# L = 20
-# W = 5
-# dM = 3
-# dL = 2
-# dR = 2
-# arc = [Vector(0, 0), Vector(0, 200), Vector(200, 200)]
-
-# for i, xx in enumerate(x):
-#     y[i] = linear_weave(xx, L, W, dM, dL, dR)
-    
-#     pt = arc_weave(xx, L, W, dM, dL, dR, arc)
-#     xa.append(pt.x)
-#     ya.append(pt.y)
-
-# # plt.subplot(211)
-# # plt.plot(x, y)
-# plt.subplot(111)
-# plt.plot(xa, ya)
-
-# plt.show()
+# Calculates the length or perimeter of an arc
+def arc_perimeter(arc):
+    c, r, a0, a2 = arc_from_points(arc)
+    return r*abs(a2-a0)
 
 
 
 
 
+# if __name__ == '__main__':
+if True:
+    import matplotlib.pyplot as plt
+
+
+    # Setup plot
+    fig = plt.figure(figsize=(12,9))
+
+    ax1 = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
 
 
 
+    ## LINE EXAMPLE
 
-L = 20
-W = 5
-dM = 3
-dL = 2
-dR = 2
-arc = [Vector(0, 0), Vector(0, 200), Vector(200, 200)]
+    L = 20 # Length or period of weave
+    W = 5  # Width or amplitude of weave
+    dM = 3 # Dwell middle length 
+    dL = 2 # Dwell left length
+    dR = 2 # Dwell right length
 
+    # Distance of weld weave
+    D = 200
 
-c, r, a0, a2 = arc_from_points(arc)
+    x = []
+    y = []
 
-arc_length = r*abs(a2-a0)
+    N = 1000 # Number of arc samples
+    for i in range(1000):
+        xx = D*i/N
+        yy = line_weave(xx, L, W, dM, dL, dR)
+        x.append(xx)
+        y.append(yy)
 
-perim  = np.arange(0, arc_length, 0.5)
-x = np.zeros_like(perim)
-y = np.zeros_like(perim)
-
-for i, xx in enumerate(perim):
-    xy = arc_weave(xx, L, W, dM, dL, dR, arc)
-    x[i] = xy.x
-    y[i] = xy.y
-
-plt.subplot(111)
-plt.plot(x, y)
-
-plt.show()
-
-
-
-
-
-
-
-
-
-
+    # Make line plot
+    ax1.plot(x, y)
+    ax1.set(xlim=[0, D], ylim=[-D/2, D/2], aspect=1, adjustable='box')
 
 
 
 
 
+    ## ARC EXAMPLE
+
+    L = 20 # Length or period of weave
+    W = 5  # Width or amplitude of weave
+    dM = 3 # Dwell middle length 
+    dL = 2 # Dwell left length
+    dR = 2 # Dwell right length
+    arc = [Vector(0, 0), Vector(0, 200), Vector(200, 200)] # 3 point arc
+
+    # Calculate perimeter of arc
+    P = arc_perimeter(arc)
+
+    x = []
+    y = []
+
+    N = 1000 # Number of arc samples
+    for i in range(1000):
+        xx = P*i/N
+        pt = arc_weave(xx, L, W, dM, dL, dR, arc)
+        x.append(pt.x)
+        y.append(pt.y)
+
+    # Make arc plot
+    ax2.plot(x, y)
+    ax2.set(xlim=[-50, 250], ylim=[-50, 250], aspect=1, adjustable='box')
+
+
+    # Show plot
+    plt.show()
 

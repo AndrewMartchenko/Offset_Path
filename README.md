@@ -10,6 +10,12 @@ Impemination of CAD like feature to "offset" an entire path. Interior angles are
 * Use Q or Esc to quit, and
 * Click on canvas to place line or arc control points
 
+# Weave
+Implementation of linear and arc weaves. 
+
+![Weave Screenshot](weave_example.png)
+
+
 ## Author
 
 * Andrew Martchenko
