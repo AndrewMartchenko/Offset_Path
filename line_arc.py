@@ -1,11 +1,9 @@
 import math
 from vector import Vector
 
-MAX_ERROR = 0.001
+MAX_ERROR = 0.0001
 
 NUM_ITER = 20
-
-
 
 
 def is_line(seg):
@@ -33,20 +31,39 @@ def pt_angle_on_arc(arc, pt):
     a = (pt-c).angle()
 
     if a2 > a0:
-        if a0<= a and a <= a2:
+        if a0-0.001<= a and a <= a2+0.001:
             return a
         a += 2*math.pi
-        if a0 <= a and a <= a2:
+        if a0-0.001 <= a and a <= a2+0.001:
             return a
     else:
-        if a2 <= a and a <= a0:
+        if a2-0.001 <= a and a <= a0+0.001:
             return a
         a += 2*math.pi
-        if a2 <= a and a <= a0:
+        if a2-0.001 <= a and a <= a0+0.001:
             return a
         
     return None
 
+# Returns unit vector tangent to start of arc
+def arc_start_tangent(arc):
+    c, _, a0, a2 = arc_from_points(arc)
+    u = (arc[0]-c).normal()
+    if a0 > a2:
+        u *= -1
+
+    return u
+
+# Returns unit vector tangent to end of arc
+def arc_end_tangent(arc):
+    c, _, a0, a2 = arc_from_points(arc)
+    u = (arc[2]-c).normal()
+    if a0 > a2:
+        u *= -1
+    return u
+
+def line_tangent(line):
+    return (line[1]-line[0]).norm()
 
 # Adjusts the end points of the arc to q0 and q2
 def arc_clip(arc, q0, q2):
@@ -205,6 +222,20 @@ def line_segment_arc_intersect(line_seg, arc):
         return (None, None)
 
     return (pt, t)
+
+
+# Returns the first intersect of line and arc.
+# Note: search starts from line[0]
+def line_arc_intersect(line_seg, arc):
+    pt, t = line_circ_intersect(line_seg, arc)
+    # If intersection is not on line segment
+    if t is None:
+        return (None, None)
+    # If intersection is not on arc segment
+    if pt_angle_on_arc(arc, pt) is None:
+        return (None, None)
+
+    return (pt, t)
      
 # Returns the first intersect of arc0 and arc1.
 # Note: search starts from arc0[0]
@@ -236,7 +267,7 @@ def line_intersect(line0, line1):
     # If lines are co-linear
     if Vector.cross(v1, v0) == 0:
         # lines intersect everywhere
-        return (p1, 1) # Not sure if we should return the end point on line0 when lines are co-linear
+        return (p1, 1, 0) # Not sure if we should return the end point on line0 when lines are co-linear
 
         
     # solve for s and t when p and q are equal

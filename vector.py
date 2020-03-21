@@ -13,6 +13,8 @@ class Vector:
 
     def length2(self):
         return self.x*self.x + self.y*self.y
+
+
     
     def norm(self):
         return self/self.length()
@@ -32,6 +34,10 @@ class Vector:
         return self.norm().tangent()
 
     @staticmethod
+    def is_collinear(a, b, c):
+        return (Vector.cross(b-a, c-a) == 0)
+
+    @staticmethod
     def dot(lhs, rhs):
         return lhs.x*rhs.x + lhs.y*rhs.y
 
@@ -41,15 +47,14 @@ class Vector:
         return lhs.x*rhs.y-lhs.y*rhs.x
 
     # Calculates the angle from v0 to v1
-    def angle2(v0, v1):
+    def angle_between(v0, v1):
         u0 = v0.norm()
         u1 = v1.norm()
-        
         # Calculate the direction of the angle
-        delta = 1.0 if Vector.cross(u0, u1) > 0.0 else 0.0
+        delta = 1.0 if Vector.cross(u0, u1) > 0.0 else -1.0
         angle = math.acos(Vector.dot(u0, u1))*delta
-
         return angle
+    
     def copy(self):
         return Vector(self.x, self.y)
 

@@ -1,3 +1,4 @@
+
 import math
 import numpy as np
 import cv2
@@ -81,15 +82,11 @@ def draw_grid(img):
 # Update key points on click
 def on_mouse(event, x, y, model, view):
 
-    if x < 0 or y < 0:
-        x = view.old_x
-        y = view.old_y
-    else:
-        view.old_x = x
-        view.old_y = y
-
     x = round(x/GRID_SIZE)*GRID_SIZE
     y = round(y/GRID_SIZE)*GRID_SIZE
+
+    view.old_x = x
+    view.old_y = y
     
     y_offset = view.img.shape[0]-1
     y = y_offset-y
@@ -104,22 +101,26 @@ def on_mouse(event, x, y, model, view):
 
         if view.mode == LINE:
             if len(view.guide) == 1:
-                guide = [view.guide[0], xy]
-                offset = offset_segment(guide, model.gap)
-                draw_line(view.new_img, guide[0], guide[1], GRAY)
-                draw_line(view.new_img, offset[0], offset[1], DARK_GREEN)
+                if (view.guide[0].x != x) or (view.guide[0].y != y):
+                    guide = [view.guide[0], xy]
+                    offset = offset_segment(guide, model.gap)
+                    draw_line(view.new_img, guide[0], guide[1], GRAY)
+                    draw_line(view.new_img, offset[0], offset[1], DARK_GREEN)
         else:
             if len(view.guide) == 1:
-                guide = [view.guide[0], xy]
-                offset = offset_segment(guide, model.gap)
-                draw_line(view.new_img, guide[0], guide[1], GRAY)
-                draw_line(view.new_img, offset[0], offset[1], DARK_GREEN)
+                if (view.guide[0].x != x) or (view.guide[0].y != y):
+                    guide = [view.guide[0], xy]
+                    offset = offset_segment(guide, model.gap)
+                    draw_line(view.new_img, guide[0], guide[1], GRAY)
+                    draw_line(view.new_img, offset[0], offset[1], DARK_GREEN)
             elif len(view.guide) == 2:
-                if (view.guide[1].x != x) and (view.guide[1].y != y):
+                # if (view.guide[1].x != x) and (view.guide[1].y != y):
+                if not Vector.is_collinear(view.guide[0], view.guide[1], xy):
                     guide = [view.guide[0], view.guide[1], xy]
                     offset = offset_segment(guide, model.gap)
                     draw_arc(view.new_img, guide[0], guide[1], guide[2], GRAY)
                     draw_arc(view.new_img, offset[0], offset[1], offset[2], DARK_GREEN)
+
 
 
         cv2.imshow('Canvas', view.new_img)
@@ -172,7 +173,7 @@ def on_mouse(event, x, y, model, view):
         fill_lines = fill(model.joined_offsets, vec, model.space)
 
         # Print path to avoid having to draw one every time.
-        print(model.path)
+        # print(model.path)
 
         for line in fill_lines:
             draw_line(view.img, line[0], line[1], YELLOW)
@@ -180,17 +181,18 @@ def on_mouse(event, x, y, model, view):
         cv2.imshow('Canvas', view.img)
 
 
+
 class Model():
     def __init__(self, path=[], guide=[]):
         self.path = path
         self.joined_offsets = []
         self.angle = math.pi/4
-        self.space = 5
-        self.gap = 10 # Offset gap
+        self.space = 20
+        self.gap = 40 # Offset gap
     
 
 class View():
-    def __init__(self, width, height, mode=ARC, guide=[]):
+    def __init__(self, width, height, mode=LINE, guide=[]):
         self.img  = np.zeros((height, width, 3))
         self.new_img = np.zeros_like(self.img)
         draw_grid(self.img)
@@ -198,6 +200,7 @@ class View():
         self.guide = guide
         self.old_x = 0
         self.old_y = 0
+
 
     def clear(self):
         self.img[:,:,:]  = np.zeros_like(self.img)
@@ -218,19 +221,23 @@ def main():
     cv2.resizeWindow('Canvas', WINDOW_WIDTH, WINDOW_HEIGHT)
 
     model = Model()
-    model.path = [[[Vector(140, 179), Vector(60, 219), Vector(180, 279)], 10],
-                  [[Vector(180, 279), Vector(340, 239)], 10],
-                  [[Vector(340, 239), Vector(260, 479)], 30],
-                  [[Vector(260, 479), Vector(400, 359)], 10],
-                  [[Vector(400, 359), Vector(540, 339), Vector(560, 459)], 10],
-                  [[Vector(560, 459), Vector(680, 439), Vector(700, 279)], 10],
-                  [[Vector(700, 279), Vector(640, 99)], 10],
-                  [[Vector(640, 99), Vector(560, 159)], 10],
-                  [[Vector(560, 159), Vector(580, 219)], 10],
-                  [[Vector(580, 219), Vector(460, 259)], 10],
-                  [[Vector(460, 259), Vector(380, 99)], 10],
-                  [[Vector(380, 99), Vector(220, 39)], 10],
-                  [[Vector(220, 39), Vector(140, 179)], 10]]
+    model.path = []
+
+    model.path = [[[Vector(240, 179), Vector(360, 379)], 65], [[Vector(360, 379), Vector(560, 379)], 125], [[Vector(560, 379), Vector(640, 299)], 35], [[Vector(640, 299), Vector(620, 199)], 35], [[Vector(620, 199), Vector(240, 179)], 15]]
+    
+    # model.path = [[[Vector(140, 179), Vector(60, 219), Vector(180, 279)], 30],
+    #               [[Vector(180, 279), Vector(340, 239)], 10],
+    #               [[Vector(340, 239), Vector(260, 479)], 40],
+    #               [[Vector(260, 479), Vector(400, 359)], 20],
+    #               [[Vector(400, 359), Vector(540, 339), Vector(560, 459)], 30],
+    #               [[Vector(560, 459), Vector(680, 439), Vector(700, 279)], 10],
+    #               [[Vector(700, 279), Vector(640, 99)], 5],
+    #               [[Vector(640, 99), Vector(560, 159)], 10],
+    #               [[Vector(560, 159), Vector(580, 219)], 10],
+    #               [[Vector(580, 219), Vector(460, 259)], 10],
+    #               [[Vector(460, 259), Vector(380, 99)], 10],
+    #               [[Vector(380, 99), Vector(220, 39)], 10],
+    #               [[Vector(220, 39), Vector(140, 179)], 10]]
     
     view = View(WINDOW_WIDTH, WINDOW_HEIGHT)
 
@@ -240,11 +247,13 @@ def main():
     cv2.setMouseCallback('Canvas', lambda event, x, y, flags, param: on_mouse(event, x, y, model, view))
 
     on_mouse("redraw", 0, 0, model, view)
-    
+
+    k = 0
     while True:
+        
         # Break if Esc or 'q' is pressed
-        # k = cv2.waitKey(30) & 0xff
-        k = cv2.waitKeyEx(30)
+
+
         if k == 27 or k == ord('q'):
             break
         elif k == ord('l'): # Line
@@ -257,12 +266,12 @@ def main():
             model.joined_offsets = []
             on_mouse("redraw", 0, 0, model, view)
         elif k == ord('p'):  # plus
-            model.gap += 2
-            on_mouse(cv2.EVENT_MOUSEMOVE, -1, -1, model, view)
+            model.gap += 5
+            on_mouse(cv2.EVENT_MOUSEMOVE, view.old_x, view.old_y, model, view)
         elif k == ord('m'):  # minus
-            if model.gap > 2:
-                model.gap -= 2
-            on_mouse(cv2.EVENT_MOUSEMOVE, -1, -1, model, view)
+            if model.gap > 5:
+                model.gap -= 5
+            on_mouse(cv2.EVENT_MOUSEMOVE, view.old_x, view.old_y, model, view)
         elif k == UP_KEY:
             model.space += 1
             on_mouse("redraw", 0, 0, model, view)
@@ -278,7 +287,8 @@ def main():
             model.angle -= 2*math.pi/100
             on_mouse("redraw", 0, 0, model, view)
 
-
+        # Call waitKey again to redraw canvas
+        k = cv2.waitKeyEx(20)
 
     cv2.destroyAllWindows()
 
