@@ -82,7 +82,8 @@ def draw_grid(img):
     text = ['(A)rc', '(L)ine', '(P)lus Offset', '(M)inus Offset', '(D)elete', '(Q)uit']
     for line in text:
         y += dy
-        cv2.putText(img, text=line, org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW, lineType=cv2.LINE_AA)
+        cv2.putText(img, text=line, org=(0, y),fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                    fontScale=0.5, color=YELLOW, lineType=cv2.LINE_AA)
     
     img[::GRID_SIZE,::GRID_SIZE,:] = GRAY
 
@@ -231,7 +232,7 @@ def main():
     model = Model()
     model.path = []
 
-    model.path = [[[Vector(240, 179), Vector(360, 379)], 65], [[Vector(360, 379), Vector(560, 379)], 125], [[Vector(560, 379), Vector(640, 299)], 35], [[Vector(640, 299), Vector(620, 199)], 35], [[Vector(620, 199), Vector(240, 179)], 15]]
+    # model.path = [[[Vector(240, 179), Vector(360, 379)], 65], [[Vector(360, 379), Vector(560, 379)], 125], [[Vector(560, 379), Vector(640, 299)], 35], [[Vector(640, 299), Vector(620, 199)], 35], [[Vector(620, 199), Vector(240, 179)], 15]]
     
     # model.path = [[[Vector(140, 179), Vector(60, 219), Vector(180, 279)], 30],
     #               [[Vector(180, 279), Vector(340, 239)], 10],
@@ -246,7 +247,10 @@ def main():
     #               [[Vector(460, 259), Vector(380, 99)], 10],
     #               [[Vector(380, 99), Vector(220, 39)], 10],
     #               [[Vector(220, 39), Vector(140, 179)], 10]]
-    
+
+
+    model.path = [[[Vector(140, 219), Vector(280, 339), Vector(340, 359)], 75], [[Vector(340, 359), Vector(420, 259), Vector(520, 119)], 45]]
+
     view = View(WINDOW_WIDTH, WINDOW_HEIGHT)
 
     #            line           arc

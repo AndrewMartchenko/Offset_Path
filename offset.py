@@ -26,6 +26,7 @@ def segment_intersect(s0, s1):
 
 def line_line_extend(s0, s1, r):
 
+    
     # Find intersection if offset was extended
     pt, _, _ = line_intersect(s0, s1)
     # Make temp copy of these segments
@@ -37,7 +38,8 @@ def line_line_extend(s0, s1, r):
     path1 = offset_segment(s1_temp, -r)
 
     # Find intersection of segments and use as a temp path
-    c, _, _ = line_intersect(path0, path1)
+    c, t, s = line_intersect(path0, path1)
+    print(t, s)
     path0 = [path0[0], c]
     path1 = [c, path1[1]]
 
@@ -118,7 +120,7 @@ def join_offsets(path, offsets):
 
         angle = Vector.angle_between(u0, u1)
 
-        print('ANGLE: ', angle*180/math.pi)
+        # print('ANGLE: ', angle*180/math.pi)
         if angle > 0:  # Interior angle
 
             # Lines are expected to intersec, but this won't always be the
@@ -288,20 +290,22 @@ def join_offsets(path, offsets):
                          
                     else:
                         # Add line to start of s1
-                        joined_offsets.insert(i+1, [s1[0]-u1, s1[0]])
+                        joined_offsets.insert(i+1, [s1[0]-u1, s1[0].copy()])
                         s1 = joined_offsets[i+1]
                         i += 1
                         n += 1
                         pt, _ = line_arc_intersect(s1, s0)
                         if pt_angle_on_arc(s0, pt) is None:
                             # Extend arc (s0)
-                            # Angle is acute. Need to handle this better 
-                            joined_offsets.insert(i, [s0[2], s0[2]+u0])
+                            # Angle is acute. Need to handle this better
+                            print('here i am')
+                            joined_offsets.insert(i, [s0[2].copy(), s0[2]+u0])
                             s0 = joined_offsets[i]
                             i += 1
                             arc_i += 1
                             n += 1
                             s0[:], s1[:], c = line_line_extend(s0, s1, r)
+                            # _, _, c = line_line_extend(s0, s1, r)
                             p0 = s0[1]
                             p2 = s1[0]
 
@@ -366,6 +370,7 @@ def offset_segment(seg, dist):
         return [q0, q1, q2]
 
 def offset_path(path):
+    print(path)
     closed_path = False
     numel = len(path)
     # If first point is equlal to last point
