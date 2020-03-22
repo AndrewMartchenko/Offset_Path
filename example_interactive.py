@@ -15,12 +15,12 @@ ARC = 1
 WINDOW_HEIGHT = 600
 WINDOW_WIDTH = 800
 
-WHITE = (1, 1, 1)
-GRAY = (0.5, 0.5, 0.5)
-RED = (0, 0, 1)
-GREEN = (0, 1, 0)
-DARK_GREEN = (0, 0.5, 0)
-YELLOW = (0, 1, 1)
+WHITE = (255, 255, 255)
+GRAY = (127, 127, 127)
+RED = (0, 0, 255)
+GREEN = (0, 255, 0)
+DARK_GREEN = (0, 127, 0)
+YELLOW = (0, 255, 255)
 
 def draw_arrow_head(img, p, v, size=10, color=WHITE):
     u = v.norm()
@@ -29,12 +29,12 @@ def draw_arrow_head(img, p, v, size=10, color=WHITE):
 
     y_offset = img.shape[0]-1
     pts = np.array([(round(p.x), round(y_offset-p.y)), (round(a.x), round(y_offset-a.y)), (round(b.x), round(y_offset-b.y))])
-    cv2.fillPoly(img, [pts], color=color) 
+    cv2.fillPoly(img, [pts], color=color, lineType=cv2.LINE_AA) 
     
 
 def draw_line(img, p0, p1, color=WHITE, arrow=False):
     y_offset = img.shape[0]-1
-    cv2.line(img, (round(p0.x), round(y_offset-p0.y)), (round(p1.x), round(y_offset-p1.y)), color=color)
+    cv2.line(img, (round(p0.x), round(y_offset-p0.y)), (round(p1.x), round(y_offset-p1.y)), color=color, lineType=cv2.LINE_AA)
     if arrow:
         draw_arrow_head(img, p1, p1-p0, color=color)
 
@@ -57,7 +57,7 @@ def draw_arc(img, p0, p1, p2, color=WHITE, step=0.01, arrow=False):
 
 def draw_circle(img, c, r, color=WHITE):
     y_offset = img.shape[0]-1
-    cv2.circle(img, (round(c.x), round(y_offset-c.y)), r, color)
+    cv2.circle(img, (round(c.x), round(y_offset-c.y)), r, color, lineType=cv2.LINE_AA)
     
 def draw_segments(img, segments, color=WHITE):
     for seg in segments:
@@ -78,19 +78,13 @@ GRID_SIZE = 20
 def draw_grid(img):
     y = 10
     dy = 30
-    y += dy
-    cv2.putText(img, text='(A)rc', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
-    y += dy
-    cv2.putText(img, text='(L)ine', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
-    y += dy
-    cv2.putText(img, text='(P)lus Offset', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
-    y += dy
-    cv2.putText(img, text='(M)inus Offset', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
-    y += dy
-    cv2.putText(img, text='(D)elete', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
-    y += dy
-    cv2.putText(img, text='(Q)uit', org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW)
-    img[::GRID_SIZE,::GRID_SIZE,:] = 0.5
+   
+    text = ['(A)rc', '(L)ine', '(P)lus Offset', '(M)inus Offset', '(D)elete', '(Q)uit']
+    for line in text:
+        y += dy
+        cv2.putText(img, text=line, org=(0, y), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=YELLOW, lineType=cv2.LINE_AA)
+    
+    img[::GRID_SIZE,::GRID_SIZE,:] = GRAY
 
             
 # Update key points on click
@@ -207,7 +201,7 @@ class Model():
 
 class View():
     def __init__(self, width, height, mode=LINE, guide=[]):
-        self.img  = np.zeros((height, width, 3))
+        self.img  = np.zeros((height, width, 3), dtype=np.uint8)
         self.new_img = np.zeros_like(self.img)
         draw_grid(self.img)
         self.mode = mode
