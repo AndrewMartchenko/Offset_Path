@@ -22,9 +22,21 @@ GREEN = (0, 1, 0)
 DARK_GREEN = (0, 0.5, 0)
 YELLOW = (0, 1, 1)
 
-def draw_line(img, p0, p1, color=WHITE):
+def draw_arrow_head(img, p, v, size=10, color=WHITE):
+    u = v.norm()
+    a = size*u.rotate(0.9*math.pi) + p
+    b = size*u.rotate(-0.9*math.pi) + p
+
+    y_offset = img.shape[0]-1
+    pts = np.array([(round(p.x), round(y_offset-p.y)), (round(a.x), round(y_offset-a.y)), (round(b.x), round(y_offset-b.y))])
+    cv2.fillPoly(img, [pts], color=color) 
+    
+
+def draw_line(img, p0, p1, color=WHITE, arrow=False):
     y_offset = img.shape[0]-1
     cv2.line(img, (round(p0.x), round(y_offset-p0.y)), (round(p1.x), round(y_offset-p1.y)), color=color)
+    if arrow:
+        draw_arrow_head(img, p1, p1-p0, color=color)
 
 def draw_rect(img, p0, p1, color=WHITE):
     y_offset = img.shape[0]-1
@@ -32,7 +44,7 @@ def draw_rect(img, p0, p1, color=WHITE):
 
 
 # This draws arcs more accurately than the opencv ellipse function
-def draw_arc(img, p0, p1, p2, color=WHITE, step=0.01):
+def draw_arc(img, p0, p1, p2, color=WHITE, step=0.01, arrow=False):
     c, r, a0, a2 = arc_from_points([p0, p1, p2])
     t = 0
     while t < 1:
@@ -40,6 +52,8 @@ def draw_arc(img, p0, p1, p2, color=WHITE, step=0.01):
         t += step
         pt1 = c + r*Vector(math.cos(a0+t*(a2-a0)), math.sin(a0+t*(a2-a0)))
         draw_line(img, pt0, pt1, color)
+    if arrow:
+        draw_arrow_head(img, pt1, pt1-pt0, color=color)
 
 def draw_circle(img, c, r, color=WHITE):
     y_offset = img.shape[0]-1
@@ -48,17 +62,17 @@ def draw_circle(img, c, r, color=WHITE):
 def draw_segments(img, segments, color=WHITE):
     for seg in segments:
         if is_line(seg):
-            draw_line(img, *seg, color)
+            draw_line(img, *seg, color, arrow=True)
         elif is_arc(seg):
-            draw_arc(img, *seg, color, 0.001)
+            draw_arc(img, *seg, color, 0.001, arrow=True)
 
 
 def draw_path(img, path, color=WHITE):
     for seg, _ in path:
         if is_line(seg):
-            draw_line(img, *seg, color)
+            draw_line(img, *seg, color, arrow=True)
         elif is_arc(seg):
-            draw_arc(img, *seg, color, 0.001)
+            draw_arc(img, *seg, color, 0.001, arrow=True)
             
 GRID_SIZE = 20
 def draw_grid(img):
@@ -104,22 +118,22 @@ def on_mouse(event, x, y, model, view):
                 if (view.guide[0].x != x) or (view.guide[0].y != y):
                     guide = [view.guide[0], xy]
                     offset = offset_segment(guide, model.gap)
-                    draw_line(view.new_img, guide[0], guide[1], GRAY)
-                    draw_line(view.new_img, offset[0], offset[1], DARK_GREEN)
+                    draw_line(view.new_img, guide[0], guide[1], GRAY, arrow=True)
+                    draw_line(view.new_img, offset[0], offset[1], DARK_GREEN, arrow=True)
         else:
             if len(view.guide) == 1:
                 if (view.guide[0].x != x) or (view.guide[0].y != y):
                     guide = [view.guide[0], xy]
                     offset = offset_segment(guide, model.gap)
-                    draw_line(view.new_img, guide[0], guide[1], GRAY)
-                    draw_line(view.new_img, offset[0], offset[1], DARK_GREEN)
+                    draw_line(view.new_img, guide[0], guide[1], GRAY, arrow=True)
+                    draw_line(view.new_img, offset[0], offset[1], DARK_GREEN, arrow=True)
             elif len(view.guide) == 2:
                 # if (view.guide[1].x != x) and (view.guide[1].y != y):
                 if not Vector.is_collinear(view.guide[0], view.guide[1], xy):
                     guide = [view.guide[0], view.guide[1], xy]
                     offset = offset_segment(guide, model.gap)
-                    draw_arc(view.new_img, guide[0], guide[1], guide[2], GRAY)
-                    draw_arc(view.new_img, offset[0], offset[1], offset[2], DARK_GREEN)
+                    draw_arc(view.new_img, guide[0], guide[1], guide[2], GRAY, arrow=True)
+                    draw_arc(view.new_img, offset[0], offset[1], offset[2], DARK_GREEN, arrow=True)
 
 
 
@@ -176,7 +190,7 @@ def on_mouse(event, x, y, model, view):
         # print(model.path)
 
         for line in fill_lines:
-            draw_line(view.img, line[0], line[1], YELLOW)
+            draw_line(view.img, line[0], line[1], YELLOW, arrow=True)
 
         cv2.imshow('Canvas', view.img)
 

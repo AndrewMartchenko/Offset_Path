@@ -77,8 +77,8 @@ def arc_line_extend(s0, s1, pt, r):
     path0 = arc_clip(path0, path0[0], c)
     path1 = [c, path1[1]]
 
-    ss0[:] = offset_segment(path0, r)
-    ss1[:] = offset_segment(path1, r)
+    ss0 = offset_segment(path0, r)
+    ss1 = offset_segment(path1, r)
 
     return ss0, ss1, c
 
@@ -195,7 +195,8 @@ def join_offsets(path, offsets):
 
             
         else:  # Exterior angle
-
+            arc_i = i+1 # Exterior arc index
+            
             if d0 == d1:
                 # Draw arc between segments
 
@@ -205,6 +206,7 @@ def join_offsets(path, offsets):
                 c = path[j+1][0][0]
                 
             else:
+
 
                 r = min(d0, d1)
                 
@@ -248,6 +250,7 @@ def join_offsets(path, offsets):
                         p0 = s0[1]
                         p2 = s1[0]
                         i += 1
+                        arc_i +=1 # because we inserted a line befor the arc
                         n += 1
 
                     else:
@@ -263,6 +266,7 @@ def join_offsets(path, offsets):
                         joined_offsets.insert(i+1, [s0[2], s0[2]+u0])
                         s0 = joined_offsets[i+1]
                         i += 1
+                        arc_i += 1
                         n += 1
                         pt, _ = line_arc_intersect(s0, s1)
                         if pt_angle_on_arc(s1, pt) is None:
@@ -294,15 +298,17 @@ def join_offsets(path, offsets):
                             # Angle is acute. Need to handle this better 
                             joined_offsets.insert(i, [s0[2], s0[2]+u0])
                             s0 = joined_offsets[i]
+                            i += 1
+                            arc_i += 1
+                            n += 1
                             s0[:], s1[:], c = line_line_extend(s0, s1, r)
                             p0 = s0[1]
                             p2 = s1[0]
-                            i += 1
-                            n += 1
+
                         else:
                             
-                            s0[:], s1[:], c = line_line_extend(s0, s1, r)
-                            p0 = s0[1]
+                            s0[:], s1[:], c = arc_line_extend(s0, s1, pt, r)
+                            p0 = s0[2]
                             p2 = s1[0]
 
 
@@ -310,7 +316,7 @@ def join_offsets(path, offsets):
             # Add the exterior arc
             m = (p0+p2)/2
             p1 = r*(m-c).norm()+c
-            joined_offsets.insert(i+1, [p0, p1, p2])
+            joined_offsets.insert(arc_i, [p0, p1, p2])
             i += 1
             n += 1
                 
