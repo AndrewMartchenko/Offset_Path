@@ -12,8 +12,8 @@ import time
 LINE = 0
 ARC = 1
 
-WINDOW_HEIGHT = 600
-WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 800
+WINDOW_WIDTH = 1200
 
 WHITE = (255, 255, 255)
 GRAY = (127, 127, 127)
@@ -22,7 +22,7 @@ GREEN = (0, 255, 0)
 DARK_GREEN = (0, 127, 0)
 YELLOW = (0, 255, 255)
 
-def draw_arrow_head(img, p, v, size=10, color=WHITE):
+def draw_arrow_head(img, p, v, size=5, color=WHITE):
     u = v.norm()
     a = size*u.rotate(0.9*math.pi) + p
     b = size*u.rotate(-0.9*math.pi) + p
@@ -249,7 +249,7 @@ def main():
     #               [[Vector(220, 39), Vector(140, 179)], 10]]
 
 
-    model.path = [[[Vector(140, 219), Vector(280, 339), Vector(340, 359)], 75], [[Vector(340, 359), Vector(420, 259), Vector(520, 119)], 45]]
+    # model.path = [[[Vector(140, 219), Vector(280, 339), Vector(340, 359)], 75], [[Vector(340, 359), Vector(420, 259), Vector(520, 119)], 45]]
 
     view = View(WINDOW_WIDTH, WINDOW_HEIGHT)
 

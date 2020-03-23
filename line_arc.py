@@ -17,6 +17,19 @@ def is_arc(seg):
 def copy_segment(seg):
     return [s.copy() for s in seg]
 
+def pt_angle_on_circ(arc, pt):
+    if pt is None:
+        return None
+    
+    c, r, a0, a2 = arc_from_points(arc)
+
+    if abs((pt-c).length()-r) > MAX_ERROR:
+        return None
+
+    a = (pt-c).angle()
+
+    return a
+
 # Returns angle of point if it lies on the arc
 # otherwise returns None
 def pt_angle_on_arc(arc, pt):
@@ -31,16 +44,16 @@ def pt_angle_on_arc(arc, pt):
     a = (pt-c).angle()
 
     if a2 > a0:
-        if a0-0.001<= a and a <= a2+0.001:
+        if a0 <= a and a <= a2:
             return a
         a += 2*math.pi
-        if a0-0.001 <= a and a <= a2+0.001:
+        if a0 <= a and a <= a2:
             return a
     else:
-        if a2-0.001 <= a and a <= a0+0.001:
+        if a2 <= a and a <= a0:
             return a
         a += 2*math.pi
-        if a2-0.001 <= a and a <= a0+0.001:
+        if a2 <= a and a <= a0:
             return a
         
     return None
@@ -65,12 +78,22 @@ def arc_end_tangent(arc):
 def line_tangent(line):
     return (line[1]-line[0]).norm()
 
+def segment_clip(seg, start_pt, end_pt):
+    if is_line(seg):
+        clipped_seg = [start_pt.copy(), end_pt.copy()]
+    else:
+        clipped_seg = arc_clip(seg, start_pt, end_pt)
+
+    return clipped_seg
+
 # Adjusts the end points of the arc to q0 and q2
 def arc_clip(arc, q0, q2):
     c, r, a0, a2 = arc_from_points(arc)
     
-    b0 = pt_angle_on_arc(arc, q0)
-    b2 = pt_angle_on_arc(arc, q2)
+    # b0 = pt_angle_on_arc(arc, q0)
+    # b2 = pt_angle_on_arc(arc, q2)
+    b0 = pt_angle_on_circ(arc, q0)
+    b2 = pt_angle_on_circ(arc, q2)
 
     assert b0 is not None, 'q0 must lie on arc'
     assert b2 is not None, 'q2 must lie on arc'
@@ -78,12 +101,13 @@ def arc_clip(arc, q0, q2):
     m = (q0+q2)/2
     u = (m-c).norm()
 
-    if abs(b2-b0) < math.pi:
-        q1 = c + r*u
-    else:
-        q1 = c - r*u
+    q1 = c + r*u
+    # if abs(b2-b0) < math.pi:
+    #   q1 = c + r*u
+    # else:
+    #   q1 = c - r*u
     
-    return [q0, q1, q2]
+    return [q0.copy(), q1.copy(), q2.copy()]
 
 # # Finds the intersect of a 3 point arc and a 3 point circle
 # def arc_circ_intersect(arc, circ):

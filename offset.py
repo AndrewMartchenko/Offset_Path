@@ -4,13 +4,6 @@ from line_arc import *
 
 
 # TODO:
-# Process
-# 1. extend disjoint offsets to intersect
-# 2. offset extended offsests back by small amount
-# 3. crop them to their intersection
-# 4. use these line segments as the temp new path
-# 
-#  Write function to add a unit line segment to the start/end of an arc
 
 def segment_intersect(s0, s1):
     if is_line(s0) and is_line(s1):
@@ -22,7 +15,7 @@ def segment_intersect(s0, s1):
     elif is_arc(s0) and is_arc(s1):
         pt, _ = arc_arc_intersect([s0[2], s0[1], s0[0]], s1)
 
-
+    return pt
 
 def line_line_extend(s0, s1, r):
 
@@ -84,10 +77,253 @@ def arc_line_extend(s0, s1, pt, r):
 
     return ss0, ss1, c
 
+# def join_offsets(path, offsets):
+
+#     # copy segments
+#     joined_offsets = []
+#     for s in offsets:
+#         joined_offsets.append(copy_segment(s))
+        
+#     if len(joined_offsets) < 2:
+#         return joined_offsets
+
+
+#     n = len(joined_offsets)
+#     i = 0 # offsets index
+#     j = 0 # path index
+#     while(i < n-1):
+#         s0 = joined_offsets[i]
+#         s1 = joined_offsets[i+1]
+
+#         d0 = path[j][1]
+#         d1 = path[j+1][1]
+
+
+#         if is_line(s0):
+#             u0 = line_tangent(s0) 
+#         else:
+#             u0 = arc_end_tangent(s0)
+
+#         if is_line(s1):
+#             u1 = line_tangent(s1) 
+#         else:
+#             u1 = arc_start_tangent(s1)
+
+
+#         angle = Vector.angle_between(u0, u1)
+
+#         # print('ANGLE: ', angle*180/math.pi)
+#         if angle > 0:  # Interior angle
+
+#             # Lines are expected to intersec, but this won't always be the
+#             # case if offsets are different.
+
+#             if is_line(s0) and is_line(s1):
+#                 pt, _, _ =line_intersect(s0, s1)
+#                 s0[1] = pt.copy()
+#                 s1[0] = pt.copy()
+
+
+#             elif is_line(s0) and is_arc(s1):
+#                 pt, _ = line_segment_arc_intersect([s0[1], s0[0]], s1)
+#                 if pt:
+#                     s0[1] = pt.copy()
+#                     s1[:] = arc_clip(s1, pt.copy(), s1[2].copy())
+#                 else:
+#                     if d0 > d1:  # Extend the line
+#                         pt, _ = line_arc_intersect([s0[1], s0[0]], s1)
+#                         s0[1] = pt.copy()
+#                         s1[:] = arc_clip(s1, pt.copy(), s1[2].copy())
+#                     else:  # Add extra line to start of arc
+#                         joined_offsets.insert(i+1, [s1[0]-u1, s1[0]])
+#                         s1 = joined_offsets[i+1]
+#                         pt, _, _ =line_intersect(s0, s1)
+#                         s0[1] = pt.copy()
+#                         s1[0] = pt.copy()
+#                         i += 1
+#                         n += 1
+                        
+
+#             elif is_arc(s0) and is_line(s1):
+#                 pt, _ = line_segment_arc_intersect(s1, s0)
+#                 if pt:
+#                     s1[0] = pt.copy()
+#                     s0[:] = arc_clip(s0, s0[0].copy(), pt.copy())
+#                 else:
+#                     if d0 > d1:  # Add extra line to end of arc0
+#                         joined_offsets.insert(i+1, [s0[2], s0[2]+u0])
+#                         s0 = joined_offsets[i+1]
+#                         pt, _, _ = line_intersect(s0, s1)
+#                         s0[1] = pt.copy()
+#                         s1[0] = pt.copy()
+#                         i += 1
+#                         n += 1
+#                     else: # Extend line
+#                         pt, _ = line_arc_intersect(s1, s0)
+#                         s0[2] = pt.copy()
+#                         s1[:] = arc_clip(s0, s0[0].copy(), pt.copy())
+
+#             elif is_arc(s0) and is_arc(s1):
+#                 pt, _ = arc_arc_intersect([s0[2], s0[1], s0[0]], s1)
+#                 if pt:
+#                     s0[:] = arc_clip(s0, s0[0].copy(), pt.copy())
+#                     s1[:] = arc_clip(s1, pt.copy(), s1[2].copy())
+#                 else:
+#                     if d0 > d1:  # Add line to s0
+#                         joined_offsets.insert(i+1, [s0[2], s0[2]+u0])
+#                         s0 = joined_offsets[i+1]
+#                         pt, _ = line_arc_intersect(s0, s1)
+#                         s0[1] = pt.copy()
+#                         s1[:] = arc_clip(s1, pt, s1[2])
+
+#                         i += 1
+#                         n += 1
+#                     else:  # Add extra line to s1
+#                         joined_offsets.insert(i+1, [s1[0]-u1, s1[0]])
+#                         s1 = joined_offsets[i+1]
+#                         pt, _ = line_arc_intersect(s1, s0)
+#                         s0[:] = arc_clip(s0, s0[0], pt)
+#                         s1[0] = pt.copy()
+#                         i += 1
+#                         n += 1
+
+            
+#         else:  # Exterior angle
+#             arc_i = i+1 # Exterior arc index
+            
+#             if d0 == d1:
+#                 # Draw arc between segments
+
+#                 p0 = s0[-1].copy() # Copy last point
+#                 p2 = s1[0].copy()
+#                 r = path[j][1]
+#                 c = path[j+1][0][0]
+                
+#             else:
+
+
+#                 r = min(d0, d1)
+                
+                
+#                 if is_line(s0) and is_line(s1):
+#                     s0[:], s1[:], c = line_line_extend(s0, s1, r)
+#                     p0 = s0[1]
+#                     p2 = s1[0]
+
+#                 elif is_line(s0) and is_arc(s1):
+
+#                     pt, _ = line_arc_intersect(s0[::-1], s1)
+                    
+#                     # If line and arc intersect by extending line
+#                     if pt_angle_on_arc(s1, pt) is None:
+#                         # Extend arc (s1)
+#                         joined_offsets.insert(i+1, [s1[0]-u1, s1[0]])
+#                         s1 = joined_offsets[i+1]
+#                         s0[:], s1[:], c = line_line_extend(s0, s1, r)
+#                         p0 = s0[1]
+#                         p2 = s1[0]
+#                         i += 1
+#                         n += 1
+
+#                     else:
+#                         s0[:], s1[:], c = line_arc_extend(s0, s1, pt, r)
+
+#                         p0 = s0[1]
+#                         p2 = s1[0]
+
+                        
+#                 elif is_arc(s0) and is_line(s1):
+#                     pt, _ = line_arc_intersect(s1, s0)
+                    
+#                     # If line and arc intersect by extending line
+#                     if pt_angle_on_arc(s0, pt) is None:
+#                         # Extend arc (s0)
+#                         joined_offsets.insert(i+1, [s0[2], s0[2]+u0])
+#                         s0 = joined_offsets[i+1]
+#                         s0[:], s1[:], c = line_line_extend(s0, s1, r)
+#                         p0 = s0[1]
+#                         p2 = s1[0]
+#                         i += 1
+#                         arc_i +=1 # because we inserted a line befor the arc
+#                         n += 1
+
+#                     else:
+
+#                         s0[:], s1[:], c = arc_line_extend(s0, s1, pt, r)
+#                         p0 = s0[2]
+#                         p2 = s1[0]
+
+#                 elif is_arc(s0) and is_arc(s1):
+
+#                     if d0 < d1:  # Add line to s0
+#                         # add line to end of s0
+#                         joined_offsets.insert(i+1, [s0[2], s0[2]+u0])
+#                         s0 = joined_offsets[i+1]
+#                         i += 1
+#                         arc_i += 1
+#                         n += 1
+#                         pt, _ = line_arc_intersect(s0, s1)
+#                         if pt_angle_on_arc(s1, pt) is None:
+#                             # if still no intersect, extend s1 also
+
+#                             # Angle is acute. Need to handle this better 
+#                             joined_offsets.insert(i+1, [s1[0]-u1, s1[0]])
+#                             s1 = joined_offsets[i+1]
+#                             i += 1
+#                             n += 1
+#                             s0[:], s1[:], c = line_line_extend(s0, s1, r)
+#                             p0 = s0[1]
+#                             p2 = s1[0]
+#                         else:
+#                             s0[:], s1[:], c = line_arc_extend(s0, s1, pt, r)
+#                             p0 = s0[1]
+#                             p2 = s1[0]
+
+                         
+#                     else:
+#                         # Add line to start of s1
+#                         joined_offsets.insert(i+1, [s1[0]-u1, s1[0].copy()])
+#                         s1 = joined_offsets[i+1]
+#                         i += 1
+#                         n += 1
+#                         pt, _ = line_arc_intersect(s1, s0)
+#                         if pt_angle_on_arc(s0, pt) is None:
+#                             # Extend arc (s0)
+#                             # Angle is acute. Need to handle this better
+#                             print('here i am')
+#                             joined_offsets.insert(i, [s0[2].copy(), s0[2]+u0])
+#                             s0 = joined_offsets[i]
+#                             i += 1
+#                             arc_i += 1
+#                             n += 1
+#                             s0[:], s1[:], c = line_line_extend(s0, s1, r)
+#                             # _, _, c = line_line_extend(s0, s1, r)
+#                             p0 = s0[1]
+#                             p2 = s1[0]
+
+#                         else:
+                            
+#                             s0[:], s1[:], c = arc_line_extend(s0, s1, pt, r)
+#                             p0 = s0[2]
+#                             p2 = s1[0]
+
+
+
+#             # Add the exterior arc
+#             m = (p0+p2)/2
+#             p1 = r*(m-c).norm()+c
+#             joined_offsets.insert(arc_i, [p0, p1, p2])
+#             i += 1
+#             n += 1
+                
+#         i += 1
+#         j += 1
+
+#     return joined_offsets
 
 def join_offsets(path, offsets):
 
-    # copy segments
+    # Copy segments
     joined_offsets = []
     for s in offsets:
         joined_offsets.append(copy_segment(s))
@@ -97,235 +333,125 @@ def join_offsets(path, offsets):
 
 
     n = len(joined_offsets)
-    i = 0 # offsets index
-    j = 0 # path index
-    while(i < n-1):
+    i = -1 # offsets index
+    j = -1 # path index
+    while(i+1 < n-1):
+        i += 1
+        j += 1
         s0 = joined_offsets[i]
         s1 = joined_offsets[i+1]
+
+
+
+
+        pt = segment_intersect(s0, s1)
+
+        # If s0 and s1 intersect:
+        if pt is not None:
+
+            s0[:] = segment_clip(s0, s0[0], pt)
+            s1[:] = segment_clip(s1, pt, s1[-1])
+            continue
+
+        # else
+        
 
         d0 = path[j][1]
         d1 = path[j+1][1]
 
+        # Create the three possible addons
 
-        if is_line(s0):
-            u0 = line_tangent(s0) 
-        else:
-            u0 = arc_end_tangent(s0)
-
-        if is_line(s1):
-            u1 = line_tangent(s1) 
-        else:
-            u1 = arc_start_tangent(s1)
-
-
-        angle = Vector.angle_between(u0, u1)
-
-        # print('ANGLE: ', angle*180/math.pi)
-        if angle > 0:  # Interior angle
-
-            # Lines are expected to intersec, but this won't always be the
-            # case if offsets are different.
-
-            if is_line(s0) and is_line(s1):
-                pt, _, _ =line_intersect(s0, s1)
-                s0[1] = pt.copy()
-                s1[0] = pt.copy()
-
-
-            elif is_line(s0) and is_arc(s1):
-                pt, _ = line_segment_arc_intersect([s0[1], s0[0]], s1)
-                if pt:
-                    s0[1] = pt.copy()
-                    s1[:] = arc_clip(s1, pt.copy(), s1[2].copy())
-                else:
-                    if d0 > d1:  # Extend the line
-                        pt, _ = line_arc_intersect([s0[1], s0[0]], s1)
-                        s0[1] = pt.copy()
-                        s1[:] = arc_clip(s1, pt.copy(), s1[2].copy())
-                    else:  # Add extra line to start of arc
-                        joined_offsets.insert(i+1, [s1[0]-u1, s1[0]])
-                        s1 = joined_offsets[i+1]
-                        pt, _, _ =line_intersect(s0, s1)
-                        s0[1] = pt.copy()
-                        s1[0] = pt.copy()
-                        i += 1
-                        n += 1
-                        
-
-            elif is_arc(s0) and is_line(s1):
-                pt, _ = line_segment_arc_intersect(s1, s0)
-                if pt:
-                    s1[0] = pt.copy()
-                    s0[:] = arc_clip(s0, s0[0].copy(), pt.copy())
-                else:
-                    if d0 > d1:  # Add extra line to end of arc0
-                        joined_offsets.insert(i+1, [s0[2], s0[2]+u0])
-                        s0 = joined_offsets[i+1]
-                        pt, _, _ = line_intersect(s0, s1)
-                        s0[1] = pt.copy()
-                        s1[0] = pt.copy()
-                        i += 1
-                        n += 1
-                    else: # Extend line
-                        pt, _ = line_arc_intersect(s1, s0)
-                        s0[2] = pt.copy()
-                        s1[:] = arc_clip(s0, s0[0].copy(), pt.copy())
-
-            elif is_arc(s0) and is_arc(s1):
-                pt, _ = arc_arc_intersect([s0[2], s0[1], s0[0]], s1)
-                if pt:
-                    s0[:] = arc_clip(s0, s0[0].copy(), pt.copy())
-                    s1[:] = arc_clip(s1, pt.copy(), s1[2].copy())
-                else:
-                    if d0 > d1:  # Add line to s0
-                        joined_offsets.insert(i+1, [s0[2], s0[2]+u0])
-                        s0 = joined_offsets[i+1]
-                        pt, _ = line_arc_intersect(s0, s1)
-                        s0[1] = pt.copy()
-                        s1[:] = arc_clip(s1, pt, s1[2])
-
-                        i += 1
-                        n += 1
-                    else:  # Add extra line to s1
-                        joined_offsets.insert(i+1, [s1[0]-u1, s1[0]])
-                        s1 = joined_offsets[i+1]
-                        pt, _ = line_arc_intersect(s1, s0)
-                        s0[:] = arc_clip(s0, s0[0], pt)
-                        s1[0] = pt.copy()
-                        i += 1
-                        n += 1
-
-            
-        else:  # Exterior angle
-            arc_i = i+1 # Exterior arc index
-            
-            if d0 == d1:
-                # Draw arc between segments
-
-                p0 = s0[-1].copy() # Copy last point
-                p2 = s1[0].copy()
-                r = path[j][1]
-                c = path[j+1][0][0]
-                
+        if d0 >= d1:
+            if is_line(s0):
+                u = line_tangent(s0) 
             else:
+                u = arc_end_tangent(s0)
 
-
-                r = min(d0, d1)
-                
-                
-                if is_line(s0) and is_line(s1):
-                    s0[:], s1[:], c = line_line_extend(s0, s1, r)
-                    p0 = s0[1]
-                    p2 = s1[0]
-
-                elif is_line(s0) and is_arc(s1):
-
-                    pt, _ = line_arc_intersect(s0[::-1], s1)
-                    
-                    # If line and arc intersect by extending line
-                    if pt_angle_on_arc(s1, pt) is None:
-                        # Extend arc (s1)
-                        joined_offsets.insert(i+1, [s1[0]-u1, s1[0]])
-                        s1 = joined_offsets[i+1]
-                        s0[:], s1[:], c = line_line_extend(s0, s1, r)
-                        p0 = s0[1]
-                        p2 = s1[0]
-                        i += 1
-                        n += 1
-
-                    else:
-                        s0[:], s1[:], c = line_arc_extend(s0, s1, pt, r)
-
-                        p0 = s0[1]
-                        p2 = s1[0]
-
-                        
-                elif is_arc(s0) and is_line(s1):
-                    pt, _ = line_arc_intersect(s1, s0)
-                    
-                    # If line and arc intersect by extending line
-                    if pt_angle_on_arc(s0, pt) is None:
-                        # Extend arc (s0)
-                        joined_offsets.insert(i+1, [s0[2], s0[2]+u0])
-                        s0 = joined_offsets[i+1]
-                        s0[:], s1[:], c = line_line_extend(s0, s1, r)
-                        p0 = s0[1]
-                        p2 = s1[0]
-                        i += 1
-                        arc_i +=1 # because we inserted a line befor the arc
-                        n += 1
-
-                    else:
-
-                        s0[:], s1[:], c = arc_line_extend(s0, s1, pt, r)
-                        p0 = s0[2]
-                        p2 = s1[0]
-
-                elif is_arc(s0) and is_arc(s1):
-
-                    if d0 < d1:  # Add line to s0
-                        # add line to end of s0
-                        joined_offsets.insert(i+1, [s0[2], s0[2]+u0])
-                        s0 = joined_offsets[i+1]
-                        i += 1
-                        arc_i += 1
-                        n += 1
-                        pt, _ = line_arc_intersect(s0, s1)
-                        if pt_angle_on_arc(s1, pt) is None:
-                            # if still no intersect, extend s1 also
-
-                            # Angle is acute. Need to handle this better 
-                            joined_offsets.insert(i+1, [s1[0]-u1, s1[0]])
-                            s1 = joined_offsets[i+1]
-                            i += 1
-                            n += 1
-                            s0[:], s1[:], c = line_line_extend(s0, s1, r)
-                            p0 = s0[1]
-                            p2 = s1[0]
-                        else:
-                            s0[:], s1[:], c = line_arc_extend(s0, s1, pt, r)
-                            p0 = s0[1]
-                            p2 = s1[0]
-
-                         
-                    else:
-                        # Add line to start of s1
-                        joined_offsets.insert(i+1, [s1[0]-u1, s1[0].copy()])
-                        s1 = joined_offsets[i+1]
-                        i += 1
-                        n += 1
-                        pt, _ = line_arc_intersect(s1, s0)
-                        if pt_angle_on_arc(s0, pt) is None:
-                            # Extend arc (s0)
-                            # Angle is acute. Need to handle this better
-                            print('here i am')
-                            joined_offsets.insert(i, [s0[2].copy(), s0[2]+u0])
-                            s0 = joined_offsets[i]
-                            i += 1
-                            arc_i += 1
-                            n += 1
-                            s0[:], s1[:], c = line_line_extend(s0, s1, r)
-                            # _, _, c = line_line_extend(s0, s1, r)
-                            p0 = s0[1]
-                            p2 = s1[0]
-
-                        else:
-                            
-                            s0[:], s1[:], c = arc_line_extend(s0, s1, pt, r)
-                            p0 = s0[2]
-                            p2 = s1[0]
-
-
-
-            # Add the exterior arc
-            m = (p0+p2)/2
-            p1 = r*(m-c).norm()+c
-            joined_offsets.insert(arc_i, [p0, p1, p2])
+            # Create arc_join_1
+            c = s0[-1]+d1*u.rotate(-math.pi/2)
+            arc_join_1 = [s0[-1].copy(), c+d1*u.rotate(math.pi/4), c+d1*u]
+            joined_offsets.insert(i+1, arc_join_1)
             i += 1
             n += 1
+
+            if d0 == d1:
+                arc_join_1[:] = segment_clip(arc_join_1, arc_join_1[0], s1[0])
+                continue
+
+
+            pt = segment_intersect(arc_join_1, s1)
+            if pt is not None:
+                arc_join_1[:] = segment_clip(arc_join_1, arc_join_1[0], pt)
+                s1[:] = segment_clip(s1, pt, s1[-1])
+                continue
+
+
+            # Create line_join
+            line_join = [arc_join_1[-1].copy(), s0[-1] + d1*u + d0*u.rotate(-math.pi/2)]
+            joined_offsets.insert(i+1, line_join)
+            i += 1
+            n += 1
+
+            pt = segment_intersect(line_join, s1)
+            if pt is not None:
+                line_join[:] = segment_clip(line_join, line_join[0], pt)
+                s1[:] = segment_clip(s1, pt, s1[-1])
+                continue
+
+            # Create arc_join_2
+            c =  line_join[-1]-d1*u
+            arc_join_2 = [line_join[-1].copy(), c+d1*u.rotate(-math.pi/4), c+d1*u.rotate(-math.pi/2)]
+            joined_offsets.insert(i+1, arc_join_2)
+            i += 1
+            n += 1
+
+            arc_join_2[:] = segment_clip(arc_join_2, arc_join_2[0], s1[0])
+
+
+
+
+            
+        else:
+            if is_line(s1):
+                u = line_tangent(s1) 
+            else:
+                u = arc_start_tangent(s1)
                 
-        i += 1
-        j += 1
+            c = s1[0]+d0*u.rotate(-math.pi/2)
+            arc_join_1 = [c-d0*u, c+d0*u.rotate(3*math.pi/4), s1[0].copy()]
+            joined_offsets.insert(i+1, arc_join_1)
+            i += 1
+            n += 1
+
+            pt = segment_intersect(s0, arc_join_1)
+            if pt is not None:
+                arc_join_1[:] = segment_clip(arc_join_1, pt, arc_join_1[-1])
+                s0[:] = segment_clip(s0, s0[0], pt)
+                continue
+            
+            line_join = [s1[0] - d0*u + d1*u.rotate(-math.pi/2), arc_join_1[0].copy()]
+            joined_offsets.insert(i, line_join)
+            i += 1
+            n += 1
+
+            pt = segment_intersect(s0, line_join)
+            if pt is not None:
+                line_join[:] = segment_clip(line_join, pt, line_join[-1])
+                s0[:] = segment_clip(s0, s0[0], pt)
+                continue
+            
+            c = line_join[0]+d0*u
+            arc_join_2 = [c+d0*u.rotate(-math.pi/2), c+d0*u.rotate(-3*math.pi/4), line_join[0].copy() ]
+            joined_offsets.insert(i-1, arc_join_2)
+            i += 1
+            n += 1
+
+            arc_join_2[:] = segment_clip(arc_join_2, s0[-1], arc_join_2[-1])
+
+
+
+
+  
 
     return joined_offsets
 
