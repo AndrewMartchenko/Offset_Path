@@ -147,15 +147,13 @@ def segment_clip(seg, start_pt, end_pt):
         clipped_seg = [start_pt.copy(), end_pt.copy()]
     else:
         clipped_seg = arc_clip(seg, start_pt, end_pt)
-        # if clipped_seg[0] is None:
-        #     # Assume segment needs to be extended, not clipped_seg
-        #     clipped_seg = [start_pt, seg[1], end_pt]
 
     return clipped_seg
 
 
 
-# Adjusts the end points of the arc to q0 and q2
+# Adjusts the end points of the arc to q0 and q2.
+# This function is also used to extend the start and end point of the arc
 def arc_clip(arc, q0, q2):
     c, r, a0, a2 = arc_from_points(arc)
     
@@ -163,36 +161,17 @@ def arc_clip(arc, q0, q2):
     b2 = pt_angle_on_arc(arc, q2)
     
 
-    print('Arc old', a0, a2)
     if b0 is None:
         b0 = pt_angle_before_arc(arc, q0)
 
     if b2 is None:
         b2 = pt_angle_after_arc(arc, q2)
 
-    
-
     if b0 is None or b2 is None:
         return [None, None, None]
-
-
-    
-    # assert b0 is not None, 'q0 must lie on arc'
-    # assert b2 is not None, 'q2 must lie on arc'
-
     b1 = (b0+b2)/2
-
     q1 = c + r*Vector(math.cos(b1), math.sin(b1))
 
-    # m = (q0+q2)/2
-    # u = (m-c).norm()
-
-    # # q1 = c + r*u
-    # if abs(b2-b0) < math.pi:
-    #   q1 = c + r*u
-    # else:
-    #   q1 = c - r*u
-    
     return [q0.copy(), q1.copy(), q2.copy()]
 
 # # Finds the intersect of a 3 point arc and a 3 point circle
@@ -258,19 +237,6 @@ def arc_arc_intersect(arc0, arc1):
     return None
 
 
-    
-    # p, t = arc_circ_intersect(arc0, arc1)
-
-    # # If both arcs were circles is their no intercection
-    # if t is None:
-    #     return (None, None)
-        
-    # If intersection is not on arc1 segment
-    # if pt_angle_on_arc(arc1, p) is None:
-    #     return (None, None)
-    
-    # return (p, t)
-
 # Returns the first intersect of line and arc.
 # Note: search starts from line[0]
 def line_arc_intersect(line_seg, arc):
@@ -284,158 +250,23 @@ def line_arc_intersect(line_seg, arc):
 
     return (pt, t)
 
-# def arc_arc_intersect_double_search(arcA, arcB):
-#     cA, rA, a0A, a2A = arc_from_points(arcA)
-#     cB, rB, a0B, a2B = arc_from_points(arcB)
-
-#     AB = (cA-cB).length()
-    
-#     # If too far apart
-#     if AB > rA+rB:
-#         return (None, None)
-
-#     # If arcB is inside arcA
-#     if AB+rB < rA:
-#         return (None, None)
-
-#     # If arcA is inside arcB
-#     if AB+rA < rB:
-#         return (None, None)
-    
-#     tA = 0.5
-#     tB = 0.5
-#     rate = 1.0
-#     for i in range(NUM_ITER):
-
-#         pA = cA + rA*Vector(math.cos(a0A+tA*(a2A-a0A)), math.sin(a0A+tA*(a2A-a0A)))
-#         pB = cB + rB*Vector(math.cos(a0B+tB*(a2B-a0B)), math.sin(a0B+tB*(a2B-a0B)))
-#         dpdtA =  rA*(a2A-a0A)*Vector(-math.sin(a0A+tA*(a2A-a0A)), math.cos(a0A+tA*(a2A-a0A)))
-#         eA =  Vector.dot(pA-pB, pA-pB)
-#         dedtA =  -2*Vector.dot(dpdtA, pA-pB)
-#         tA = tA - rate*eA/dedtA
-
-#         pA = cA + rA*Vector(math.cos(a0A+tA*(a2A-a0A)), math.sin(a0A+tA*(a2A-a0A)))
-#         pB = cB + rB*Vector(math.cos(a0B+tB*(a2B-a0B)), math.sin(a0B+tB*(a2B-a0B)))
-#         dpdtB =  rB*(a2B-a0B)*Vector(-math.sin(a0B+tB*(a2B-a0B)), math.cos(a0B+tB*(a2B-a0B)))
-#         eB =  Vector.dot(pB-pA, pB-pA)
-#         dedtB =  -2*Vector.dot(dpdtB, pB-pA)
-#         tB = tB - rate*eB/dedtB
-
-        
-        
-#     # If intersection is not on arc segment 
-#     if tA < 0 or tA > 1:
-#         return (None, None)
-#     if tB < 0 or tB > 1:
-#         return (None, None)
-
-#     pA = cA + rA*Vector(math.cos(a0A+tA*(a2A-a0A)), math.sin(a0A+tA*(a2A-a0A)))
-
-#     return (pA, tA)
-
-
-def arc_circ_intersect_bin_search(arc, circ):
-    p0, p1, p2 = arc
-    ca, ra, a0, a2 = arc_from_points(arc)
-    c, r, _, _ = arc_from_points(circ)
-
-    # If too far apart
-    if (ca-c).length() > ra+r:
-        return (None, None)
-
-    # If circle is inside arc
-    if (ca-c).length()+r < ra:
-        return (None, None)
-
-    # If arc is inside circle
-    if (ca-c).length()+ra < r:
-        return (None, None)
-    
-    t0 = 0
-    t1 = 1
-
-    t = 0.5
-
-    for i in range(NUM_ITER):
-        ta = (t0+t)/2
-        tb = (t1+t)/2
-
-        pa = ca + ra*Vector(math.cos(a0+ta*(a2-a0)), math.sin(a0+ta*(a2-a0)))
-        pb = ca + ra*Vector(math.cos(a0+tb*(a2-a0)), math.sin(a0+tb*(a2-a0)))
-
-        da = abs((pa-c).length()-r)
-        db = abs((pb-c).length()-r)
-
-        if da < db:
-            t1 = t
-        else:
-            t0 = t
-            
-
-    t = (t0+t1)/2
-
-    # If intersection is not on arc segment 
-    if t < 0 or t > 1:
-        return (None, None)
-    
-    p = ca + ra*Vector(math.cos(a0+t*(a2-a0)), math.sin(a0+t*(a2-a0)))
-
-    return (p, t)
-
-
-
-# This is the Non-"Functional" way to do the above
-def arc_circ_intersect_old(arc, circ):
-    p0, p1, p2 = arc
-    ca, ra, a0, a1 = arc_from_points(arc)
-    c, r, _, _ = arc_from_points(circ)
-
-    # If too far apart
-    if (ca-c).length() > ra+r:
-        return (None, None)
-
-    # If circle is inside arc
-    if (ca-c).length()+r < ra:
-        return (None, None)
-
-    # If arc is inside circle
-    if (ca-c).length()+ra < r:
-        return (None, None)
-    
-    
-    t = 0.5
-    for i in range(NUM_ITER):
-
-        p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
-        dpdt =  ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
-        e =  r*r - Vector.dot(p-c, p-c)
-        dedt =  -2*Vector.dot(dpdt, p-c)
-        t = t - e/dedt
-        
-    # If intersection is not on arc segment 
-    if t < 0 or t > 1:
-        return (None, None)
-    
-    p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
-
-    return (p, t)
 
 # This is the Non-"Functional" way to do the above
 def circ_circ_intersect(circA, circB):
     p0, p1, p2 = circA
     ca, ra, a0, a1 = arc_from_points(circA)
-    c, r, _, _ = arc_from_points(circB)
+    cb, rb, _, _ = arc_from_points(circB)
 
     # If too far apart
-    if (ca-c).length() > ra+r:
+    if (ca-cb).length() > ra+rb:
         return (None, None)
 
     # If circle is inside arc
-    if (ca-c).length()+r < ra:
+    if (ca-cb).length()+rb < ra:
         return (None, None)
 
     # If arc is inside circle
-    if (ca-c).length()+ra < r:
+    if (ca-cb).length()+ra < rb:
         return (None, None)
     
     
@@ -444,13 +275,13 @@ def circ_circ_intersect(circA, circB):
 
         p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
         dpdt =  ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
-        e =  r*r - Vector.dot(p-c, p-c)
-        dedt =  -2*Vector.dot(dpdt, p-c)
+        e =  rb*rb - Vector.dot(p-cb, p-cb)
+        dedt =  -2*Vector.dot(dpdt, p-cb)
         t = t - e/dedt
         
     pt1 = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
 
-    pt2 = mirror_pt([ca, c], pt1)
+    pt2 = mirror_pt([ca, cb], pt1)
 
     return (pt1, pt2)
 
@@ -636,6 +467,20 @@ def arc_from_points(arc):
 
     return c, r, a0, a2
 
+def mirror_pt(line, pt):
+    g = project_pt_on_line(line, pt)
+    v = pt-g
+    qt = g - v
+    return qt
+
+def project_pt_on_line(line, pt):
+    p1, p0 = line
+    u = (p1-p0).norm()
+    a = pt-p0
+    proj_dist = Vector.dot(a, u)
+    proj_pt = p0+proj_dist*u
+    return proj_pt
+
 
 
 
@@ -648,13 +493,6 @@ def radius3(p0, p1, p2):
     r = (p0-c).length()
     return r
 
-def mirror_pt(line, pt):
-    g = project_pt_on_line(line, pt)
-    v = pt-g
-    qt = g - v
-    return qt
-
-
 def arc_point_distance(arc, pt):
     p0, p1, p2 = arc
     c = center3(p0, p1, p2)
@@ -664,13 +502,6 @@ def arc_point_distance(arc, pt):
     dist = abs(d-r)
     return dist
 
-def project_pt_on_line(line, pt):
-    p1, p0 = line
-    u = (p1-p0).norm()
-    a = pt-p0
-    proj_dist = Vector.dot(a, u)
-    proj_pt = p0+proj_dist*u
-    return proj_pt
 
 def is_pt_on_line(line, pt):
     p0, p1 = line
@@ -695,4 +526,3 @@ def closest_pt(pt, points):
             p_min = p
     return p_min
 
-#  LocalWords:  dpdtA
