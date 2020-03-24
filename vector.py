@@ -52,7 +52,13 @@ class Vector:
         u1 = v1.norm()
         # Calculate the direction of the angle
         delta = 1.0 if Vector.cross(u0, u1) > 0.0 else -1.0
-        angle = math.acos(Vector.dot(u0, u1))*delta
+        u0_dot_u1 = Vector.dot(u0, u1)
+        # Due to roundoff error reult could be 1.000002
+        # so need to bring it back to 1.0 for it to be in range
+        # of acos()
+        if u0_dot_u1 > 1.0: 
+            u0_dot_u1 = 1.0
+        angle = math.acos(u0_dot_u1)*delta
         return angle
     
     def copy(self):

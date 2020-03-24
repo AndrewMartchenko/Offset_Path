@@ -5,17 +5,6 @@ from line_arc import *
 
 # TODO:
 
-def segment_intersect(s0, s1):
-    if is_line(s0) and is_line(s1):
-        pt, _ = line_segment_intersect(s0, s1)
-    elif is_line(s0) and is_arc(s1):
-        pt, _ = line_segment_arc_intersect([s0[1], s0[0]], s1)
-    elif is_arc(s0) and is_line(s1):
-        pt, _ = line_segment_arc_intersect(s1, s0)
-    elif is_arc(s0) and is_arc(s1):
-        pt, _ = arc_arc_intersect([s0[2], s0[1], s0[0]], s1)
-
-    return pt
 
 def line_line_extend(s0, s1, r):
 
@@ -32,7 +21,7 @@ def line_line_extend(s0, s1, r):
 
     # Find intersection of segments and use as a temp path
     c, t, s = line_intersect(path0, path1)
-    print(t, s)
+    # print(t, s)
     path0 = [path0[0], c]
     path1 = [c, path1[1]]
 
@@ -349,6 +338,7 @@ def join_offsets(path, offsets):
         # If s0 and s1 intersect:
         if pt is not None:
 
+            # breakpoint()
             s0[:] = segment_clip(s0, s0[0], pt)
             s1[:] = segment_clip(s1, pt, s1[-1])
             continue
@@ -423,8 +413,11 @@ def join_offsets(path, offsets):
             i += 1
             n += 1
 
+            # breakpoint()
             pt = segment_intersect(s0, arc_join_1)
+
             if pt is not None:
+                print('We have arc arc intersection')
                 arc_join_1[:] = segment_clip(arc_join_1, pt, arc_join_1[-1])
                 s0[:] = segment_clip(s0, s0[0], pt)
                 continue

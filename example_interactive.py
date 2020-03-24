@@ -55,6 +55,10 @@ def draw_arc(img, p0, p1, p2, color=WHITE, step=0.01, arrow=False):
     if arrow:
         draw_arrow_head(img, pt1, pt1-pt0, color=color)
 
+    # draw_circle(img, p0, 4, color=color)
+    draw_circle(img, p1, 4, color=color)
+    # draw_circle(img, p2, 4, color=color)
+
 def draw_circle(img, c, r, color=WHITE):
     y_offset = img.shape[0]-1
     cv2.circle(img, (round(c.x), round(y_offset-c.y)), r, color, lineType=cv2.LINE_AA)
@@ -232,7 +236,9 @@ def main():
     model = Model()
     model.path = []
 
-    # model.path = [[[Vector(240, 179), Vector(360, 379)], 65], [[Vector(360, 379), Vector(560, 379)], 125], [[Vector(560, 379), Vector(640, 299)], 35], [[Vector(640, 299), Vector(620, 199)], 35], [[Vector(620, 199), Vector(240, 179)], 15]]
+    model.path = [[[Vector(300, 279), Vector(240, 499), Vector(420, 439)], 40], [[Vector(420, 439), Vector(520, 279), Vector(760, 279)], 40], [[Vector(760, 279), Vector(800, 399), Vector(780, 519)], 75], [[Vector(780, 519), Vector(900, 419), Vector(900, 319)], 100], [[Vector(900, 319), Vector(920, 139), Vector(940, 79)], 50]]
+
+    
     
     # model.path = [[[Vector(140, 179), Vector(60, 219), Vector(180, 279)], 30],
     #               [[Vector(180, 279), Vector(340, 239)], 10],
