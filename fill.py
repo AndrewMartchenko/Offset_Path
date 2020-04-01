@@ -2,34 +2,37 @@ import math
 from vector import Vector
 from line_arc import *
 
-def is_pt_in_closed_polysegment(p0, segments):
+def is_pt_in_closed_polysegment(pt, segments):
 
-    p1 = p0 + Vector(1, 0)
+    # Create horizontal line from p0
+    # Give it slight slope so that it is less likely that it is parallel
+    # to a line segment (May not be necessery if parallel lines are treated correctly)
+    line = [pt, pt + Vector(1, 0.001)]
+    
     intersect_count = 0
     for seg in segments:
 
-        # TODO: These should be called:
-        # - ray_line_seg_intersect, and
-        # - ray_arc_intersect
+        # Find all of the intersects that the line makes with all the line segments
         pB = tB = None
         if is_line(seg):
-            pA, tA = line_line_segment_intersect([p0, p1], seg)
+            pA, tA = line_line_segment_intersect(line, seg)
         else:
-            pA, tA, pB, tB = line_segment_arc_intersect([p0, p1], seg)
+            pA, tA, pB, tB = line_segment_arc_intersect(line, seg)
             # TODO: line may intersect arc twice need to test both
 
+        # If intersect is found, only count it if it has t value > 0
+        # In onther words treat the line like a ray
         if tA is not None and tA >= 0:
             intersect_count += 1
             
         if tB is not None and tB >= 0:
             intersect_count += 1
 
+    # if the modulus 2 is odd then the point is inside the polysegment
     if intersect_count % 2 == 1:
         # If odd number of intersects
-        print('### INSIDE ###')
         return True
     else:
-        print('### OUTSIDE ###')
         return False
         
 def arc_fill(path, center, space):
