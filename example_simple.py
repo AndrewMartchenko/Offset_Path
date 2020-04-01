@@ -1,7 +1,7 @@
 from vector import Vector
 # from line_arc import *
 from offset import offset_path
-from fill import fill
+from fill import line_fill, arc_fill
 
 # if __name__ == '__main__':
 if True:

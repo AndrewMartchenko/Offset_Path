@@ -237,18 +237,6 @@ def arc_arc_intersect(arc0, arc1):
     return None
 
 
-# Returns the first intersect of line and arc.
-# Note: search starts from line[0]
-def line_arc_intersect(line_seg, arc):
-    pt, t = line_circ_intersect(line_seg, arc)
-    # If intersection is not on line segment
-    if t is None:
-        return (None, None)
-    # If intersection is not on arc segment
-    if pt_angle_on_arc(arc, pt) is None:
-        return (None, None)
-
-    return (pt, t)
 
 
 # This is the Non-"Functional" way to do the above
@@ -289,11 +277,9 @@ def segment_intersect(s0, s1):
     if is_line(s0) and is_line(s1):
         pt, _ = line_segment_intersect(s0[::-1], s1)
     elif is_line(s0) and is_arc(s1):
-        pt, _ = line_segment_arc_intersect(s0[::-1], s1)
-        # pt, _ = line_segment_arc_intersect(s0, s1)
+        pt, _, _, _ = line_segment_arc_intersect(s0[::-1], s1)
     elif is_arc(s0) and is_line(s1):
-        # pt, _ = line_segment_arc_intersect(s1, s0)
-        pt, _ = line_segment_arc_intersect(s1, s0[::-1])
+        pt, _, _, _ = line_segment_arc_intersect(s1, s0[::-1])
     elif is_arc(s0) and is_arc(s1):
         pt = arc_arc_intersect(s0[::-1], s1)
         # pt = arc_arc_intersect(s0, s1)
@@ -309,7 +295,7 @@ def line_circ_intersect(line, circ):
 
     # if line and circ do not intersect
     if dist > r:
-        return (None, None)
+        return (None, None, None, None)
     
     t = 0.0
     for i in range(NUM_ITER):
@@ -320,39 +306,100 @@ def line_circ_intersect(line, circ):
         dedt = -2*Vector.dot(dpdt, p-c)
         t = t - e/dedt
 
-    p = p0+t*(p1-p0)
+    tA = t
+    pA = p0+tA*(p1-p0)
+
+    # TODO:
+    # 1. Work out the other intersect and t value
+    # 2. Sort by whichever is closest and return
+    proj = project_pt_on_line(line, c)
+    mirror = [proj, c]
+    pB = mirror_pt(mirror, pA)
+
+    # Find parametric value for pB
+    dA = (pA-p0).length()
+    dB = (pB-p0).length()
+    # tA/dA = tB/dB, therefore
+    tB = tA*dB/dA
+
+    # These should be in order already, but just in case
+    # return point closest to p0 first
+    if tA <= tB:
+        return (pA, tA, pB, tB)
+    else:
+        return (pB, tB, pA, tA)
+
+
+# Returns the first intersect of line and arc.
+# Note: search starts from line[0]
+def line_arc_intersect(line_seg, arc):
+    pA, tA, pB, tB = line_circ_intersect(line_seg, arc)
+
+
+    # If intersection is not on line segment
+    if tA is None:
+        return (None, None, None, None)
+
+    A_on_arc = pt_angle_on_arc(arc, pA) is not None
+    B_on_arc = pt_angle_on_arc(arc, pB) is not None
+
+    if A_on_arc and B_on_arc:
+        return pA, tA, pB, tB
+    elif A_on_arc:
+        return pA, tA, None, None
+    elif B_on_arc:
+        return pB, tB, None, None
     
+    # If intersection is not on arc segment
+    return (None, None, None, None)
 
-    return (p, t)
 
+def line_segment_circ_intersect(line_seg, circ):
+    pA, tA, pB, tB = line_circ_intersect(line_seg, circ)
+
+
+    A_on_line = (tA is not None) and (0<=tA and tA<=1)
+    B_on_line = (tB is not None) and (0<=tB and tB<=1)
+
+    if A_on_line and B_on_line:
+        return pA, tA, pB, tB
+    elif A_on_line:
+        return (pA, tA, None, None)
+    elif B_on_line:
+        return (pB, tB, None, None)
+    
+    return (None, None, None, None)
+
+
+# Returns the first intersect of line and arc.
+# Note: search starts from line[0]
+def line_segment_arc_intersect(line_seg, arc):
+
+    # pA, tA, pB, tB = line_circ_intersect(line_seg, arc)
+    pA, tA, pB, tB = line_arc_intersect(line_seg, arc)
+
+    A_on_line = (tA is not None) and (0<=tA and tA<=1)
+    B_on_line = (tB is not None) and (0<=tB and tB<=1)
+
+    if A_on_line and B_on_line:
+        return pA, tA, pB, tB
+    elif A_on_line:
+        return (pA, tA, None, None)
+    elif B_on_line:
+        return (pB, tB, None, None)
+    
+    return (None, None, None, None)
+
+
+
+
+    
 # Returns smallest distance from line to point
 def line_point_distance(line, pt):
     p0, p1 = line
     u = (p1-p0).normal()
     return abs(Vector.dot(u, pt-p0))
 
-
-def line_segment_circ_intersect(line_seg, circ):
-    p, t = line_circ_intersect(line_seg, circ)
-    if t is None:
-        return (None, None)
-    if t < 0 or t > 1:
-        return (None, None)
-
-    return (p, t)
-
-# Returns the first intersect of line and arc.
-# Note: search starts from line[0]
-def line_segment_arc_intersect(line_seg, arc):
-    pt, t = line_circ_intersect(line_seg, arc)
-    # If intersection is not on line segment
-    if t is None:
-        return (None, None)
-    if t < 0 or t > 1:
-        return (None, None)
-    # If intersection is not on arc segment
-    if pt_angle_on_arc(arc, pt) is None:
-        return (None, None)
 
     return (pt, t)
 
@@ -383,8 +430,16 @@ def line_intersect(line0, line1):
 
     return (p0+t*v0, t, s)
 
-def line_segment_intersect(line_seg0, line_seg1):
-    pt, t, s = line_intersect(line_seg0, line_seg1)
+def line_line_segment_intersect(line, seg):
+    pt, t, s = line_intersect(line, seg)
+    if 0 <= s and s <= 1:
+        return pt, t
+    else:
+        return (None, None)
+
+
+def line_segment_intersect(seg0, seg1):
+    pt, t, s = line_intersect(seg0, seg1)
 
     if 0 <= t and t <= 1 and 0 <= s and s <= 1:
         return pt, t

@@ -2,8 +2,40 @@ import math
 from vector import Vector
 from line_arc import *
 
+def is_pt_in_closed_polysegment(p0, segments):
 
-def fill(path, vec, space):
+    p1 = p0 + Vector(1, 0)
+    intersect_count = 0
+    for seg in segments:
+
+        # TODO: These should be called:
+        # - ray_line_seg_intersect, and
+        # - ray_arc_intersect
+        pB = tB = None
+        if is_line(seg):
+            pA, tA = line_line_segment_intersect([p0, p1], seg)
+        else:
+            pA, tA, pB, tB = line_segment_arc_intersect([p0, p1], seg)
+            # TODO: line may intersect arc twice need to test both
+
+        if tA is not None and tA >= 0:
+            intersect_count += 1
+            
+        if tB is not None and tB >= 0:
+            intersect_count += 1
+
+    if intersect_count % 2 == 1:
+        # If odd number of intersects
+        print('### INSIDE ###')
+        return True
+    else:
+        print('### OUTSIDE ###')
+        return False
+        
+def arc_fill(path, center, space):
+    pass
+
+def line_fill(path, vec, space):
 
     if len(path) == 0:
         return []
@@ -44,12 +76,12 @@ def fill(path, vec, space):
                     points.append(pt)
                     params.append(t0)
             elif is_arc(seg):
-                pt1, t1 = line_segment_arc_intersect([q0, q1], seg)
-                pt2, t2 = line_segment_arc_intersect([q1, q0], seg)
+                pt1, t1, pt2, t2 = line_segment_arc_intersect([q0, q1], seg)
+                # pt2, t2, _, _ = line_segment_arc_intersect([q1, q0], seg)
 
                 # Line was passed in in reverse order, so true paremetric value is obtained by subtracting from 1.0 
-                if t2 is not None:
-                    t2 = 1-t2
+                # if t2 is not None:
+                    # t2 = 1-t2
 
                 if t1 is not None:
                     points.append(pt1)
@@ -143,3 +175,16 @@ def path_bbox(path):
             
         bbox_a = join_bboxes(bbox_a, box_b)
     return bbox_a
+
+
+
+### TEST CODE
+# pt = Vector(5, 2)
+# segments = [
+#     [Vector(0,0), Vector(0, 5)],
+#     [Vector(0,5), Vector(5, 5)],
+#     [Vector(5,5), Vector(5, 0)],
+#     [Vector(5,0), Vector(0, 0)],
+#     ]
+
+# is_pt_in_closed_polysegment(pt, segments)

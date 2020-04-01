@@ -5,7 +5,7 @@ import cv2
 from vector import Vector
 from line_arc import *
 from offset import *
-from fill import *
+from fill import line_fill, arc_fill
 import time
 
 
@@ -183,7 +183,7 @@ def on_mouse(event, x, y, model, view):
             # draw_rect(view.img, bbox[0], bbox[1])
 
         vec = Vector(math.cos(model.angle), math.sin(model.angle))
-        fill_lines = fill(model.joined_offsets, vec, model.space)
+        fill_lines = line_fill(model.joined_offsets, vec, model.space)
 
         # Print path to avoid having to draw one every time.
         # print(model.path)
