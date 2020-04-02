@@ -182,14 +182,24 @@ def on_mouse(event, x, y, model, view):
         # if bbox:
             # draw_rect(view.img, bbox[0], bbox[1])
 
-        vec = Vector(math.cos(model.angle), math.sin(model.angle))
-        fill_lines = line_fill(model.joined_offsets, vec, model.space)
+
+        # vec = Vector.from_polar(1, model.angle)
+        # fill_lines = line_fill(model.joined_offsets, vec, model.space)
+        # for line in fill_lines:
+        #     draw_line(view.img, line[0], line[1], YELLOW, arrow=True)
+
+        guide_arc = [Vector(200, 300),
+                     Vector(300, 200),
+                     Vector(200, 100)]
+
+        fill_arcs = arc_fill(model.joined_offsets, guide_arc, 20)
+        for arc in fill_arcs:
+            draw_arc(view.img, arc[0], arc[1], arc[2], color=YELLOW, arrow=True)
+
 
         # Print path to avoid having to draw one every time.
         # print(model.path)
 
-        for line in fill_lines:
-            draw_line(view.img, line[0], line[1], YELLOW, arrow=True)
 
         cv2.imshow('Canvas', view.img)
 
@@ -236,26 +246,10 @@ def main():
     model = Model()
     model.path = []
 
-    model.path = [[[Vector(300, 279), Vector(240, 499), Vector(420, 439)], 40], [[Vector(420, 439), Vector(520, 279), Vector(760, 279)], 40], [[Vector(760, 279), Vector(800, 399), Vector(780, 519)], 75], [[Vector(780, 519), Vector(900, 419), Vector(900, 319)], 100], [[Vector(900, 319), Vector(920, 139), Vector(940, 79)], 50]]
+    # model.path = [[[Vector(300, 279), Vector(240, 499), Vector(420, 439)], 40], [[Vector(420, 439), Vector(520, 279), Vector(760, 279)], 40], [[Vector(760, 279), Vector(800, 399), Vector(780, 519)], 75], [[Vector(780, 519), Vector(900, 419), Vector(900, 319)], 100], [[Vector(900, 319), Vector(920, 139), Vector(940, 79)], 50]]
 
     
     
-    # model.path = [[[Vector(140, 179), Vector(60, 219), Vector(180, 279)], 30],
-    #               [[Vector(180, 279), Vector(340, 239)], 10],
-    #               [[Vector(340, 239), Vector(260, 479)], 40],
-    #               [[Vector(260, 479), Vector(400, 359)], 20],
-    #               [[Vector(400, 359), Vector(540, 339), Vector(560, 459)], 30],
-    #               [[Vector(560, 459), Vector(680, 439), Vector(700, 279)], 10],
-    #               [[Vector(700, 279), Vector(640, 99)], 5],
-    #               [[Vector(640, 99), Vector(560, 159)], 10],
-    #               [[Vector(560, 159), Vector(580, 219)], 10],
-    #               [[Vector(580, 219), Vector(460, 259)], 10],
-    #               [[Vector(460, 259), Vector(380, 99)], 10],
-    #               [[Vector(380, 99), Vector(220, 39)], 10],
-    #               [[Vector(220, 39), Vector(140, 179)], 10]]
-
-
-    # model.path = [[[Vector(140, 219), Vector(280, 339), Vector(340, 359)], 75], [[Vector(340, 359), Vector(420, 259), Vector(520, 119)], 45]]
 
     view = View(WINDOW_WIDTH, WINDOW_HEIGHT)
 

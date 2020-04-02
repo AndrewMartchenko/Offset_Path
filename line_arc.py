@@ -20,7 +20,6 @@ def copy_segment(seg):
 
 
 
-
 # Returns angle of point if it lies on the arc
 # otherwise returns None
 def pt_angle_on_arc(arc, pt):
@@ -226,15 +225,26 @@ def arc_clip(arc, q0, q2):
 def arc_arc_intersect(arc0, arc1):
     p0, p1 = circ_circ_intersect(arc0, arc1)
 
+    okay_0 = False
+    okay_1 = False
     if p0 is not None:
-        if pt_angle_on_arc(arc0, p0) is not None and pt_angle_on_arc(arc1, p0) is not None: 
-            return p0
+        if pt_angle_on_arc(arc0, p0) is not None and pt_angle_on_arc(arc1, p0) is not None:
+            okay_0 = True
 
     if p1 is not None:
-        if pt_angle_on_arc(arc0, p1) is not None and pt_angle_on_arc(arc1, p1) is not None: 
-            return p1
+        if pt_angle_on_arc(arc0, p1) is not None and pt_angle_on_arc(arc1, p1) is not None:
+            okay_1 = True
 
-    return None
+    if okay_0 and okay_1:
+        return p0, p1
+
+    if okay_0:
+        return p0, None
+
+    if okay_1:
+        return p1, None
+
+    return None, None
 
 
 
@@ -274,17 +284,18 @@ def circ_circ_intersect(circA, circB):
     return (pt1, pt2)
 
 def segment_intersect(s0, s1):
+    pA = None
+    pB = None
     if is_line(s0) and is_line(s1):
-        pt, _ = line_segment_intersect(s0[::-1], s1)
+        pA = line_segment_intersect(s0[::-1], s1)
     elif is_line(s0) and is_arc(s1):
-        pt, _, _, _ = line_segment_arc_intersect(s0[::-1], s1)
+        pA, pB = line_segment_arc_intersect(s0[::-1], s1)
     elif is_arc(s0) and is_line(s1):
-        pt, _, _, _ = line_segment_arc_intersect(s1, s0[::-1])
+        pA, pB = line_segment_arc_intersect(s1, s0[::-1])
     elif is_arc(s0) and is_arc(s1):
-        pt = arc_arc_intersect(s0[::-1], s1)
-        # pt = arc_arc_intersect(s0, s1)
+        pA,  pB= arc_arc_intersect(s0[::-1], s1)
 
-    return pt
+    return pA, pB
 
 
 def line_circ_intersect(line, circ):
@@ -319,6 +330,9 @@ def line_circ_intersect(line, circ):
     # Find parametric value for pB
     dA = (pA-p0).length()
     dB = (pB-p0).length()
+
+    dB = -dB if Vector.dot(pA-p0, pB-p0)<0 else dB
+    
     # tA/dA = tB/dB, therefore
     tB = tA*dB/dA
 
@@ -362,13 +376,13 @@ def line_segment_circ_intersect(line_seg, circ):
     B_on_line = (tB is not None) and (0<=tB and tB<=1)
 
     if A_on_line and B_on_line:
-        return pA, tA, pB, tB
+        return pA, pB
     elif A_on_line:
-        return (pA, tA, None, None)
+        return (pA, None)
     elif B_on_line:
-        return (pB, tB, None, None)
+        return (pB, None)
     
-    return (None, None, None, None)
+    return (None, None)
 
 
 # Returns the first intersect of line and arc.
@@ -382,16 +396,13 @@ def line_segment_arc_intersect(line_seg, arc):
     B_on_line = (tB is not None) and (0<=tB and tB<=1)
 
     if A_on_line and B_on_line:
-        return pA, tA, pB, tB
+        return pA, pB
     elif A_on_line:
-        return (pA, tA, None, None)
+        return (pA, None)
     elif B_on_line:
-        return (pB, tB, None, None)
+        return (pB, None)
     
-    return (None, None, None, None)
-
-
-
+    return (None, None)
 
     
 # Returns smallest distance from line to point
@@ -442,13 +453,20 @@ def line_segment_intersect(seg0, seg1):
     pt, t, s = line_intersect(seg0, seg1)
 
     if 0 <= t and t <= 1 and 0 <= s and s <= 1:
-        return pt, t
+        return pt
     else:
-        return (None, None)
+        return None
 
 
 # Calculates center of a 3 point circle
 def center3(p0, p1, p2):
+
+    # if closed arc
+    if p0 == p2:
+
+        # Assume two point circle
+        return (p0+p1)/2
+
     # midpoints
     m1 = (p0+p1)/2
     m2 = (p1+p2)/2
@@ -489,6 +507,10 @@ def arc_from_points(arc):
     a0 = (p0-c).angle()
     a1 = (p1-c).angle()
     a2 = (p2-c).angle()
+
+    # If arc is a circle
+    if a1-0.0001 <= a2 and a2 <= a1+0.0001:
+        a2 += a2+2*math.pi
 
     #  A             B             C             D             E             F
     #      a1|           a2|             |           a1|           a0|             |       

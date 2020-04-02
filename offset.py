@@ -24,7 +24,8 @@ def join_offsets(path, offsets):
         s1 = joined_offsets[i+1]
 
 
-        pt = segment_intersect(s0, s1)
+        # Get only the first intersect
+        pt, _ = segment_intersect(s0, s1)
 
         # If s0 and s1 intersect:
         if pt is not None:
@@ -60,7 +61,7 @@ def join_offsets(path, offsets):
                 continue
 
 
-            pt = segment_intersect(arc_join_1, s1)
+            pt, _ = segment_intersect(arc_join_1, s1)
             if pt is not None:
                 arc_join_1[:] = segment_clip(arc_join_1, arc_join_1[0], pt)
                 s1[:] = segment_clip(s1, pt, s1[-1])
@@ -73,7 +74,7 @@ def join_offsets(path, offsets):
             i += 1
             n += 1
 
-            pt = segment_intersect(line_join, s1)
+            pt, _ = segment_intersect(line_join, s1)
             if pt is not None:
                 line_join[:] = segment_clip(line_join, line_join[0], pt)
                 s1[:] = segment_clip(s1, pt, s1[-1])
@@ -105,7 +106,7 @@ def join_offsets(path, offsets):
             n += 1
 
             # breakpoint()
-            pt = segment_intersect(s0, arc_join_1)
+            pt, _ = segment_intersect(s0, arc_join_1)
 
             if pt is not None:
                 print('We have arc arc intersection')
@@ -118,7 +119,7 @@ def join_offsets(path, offsets):
             i += 1
             n += 1
 
-            pt = segment_intersect(s0, line_join)
+            pt, _ = segment_intersect(s0, line_join)
             if pt is not None:
                 line_join[:] = segment_clip(line_join, pt, line_join[-1])
                 s0[:] = segment_clip(s0, s0[0], pt)

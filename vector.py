@@ -5,6 +5,11 @@ class Vector:
         self.x = x
         self.y = y
 
+    @staticmethod
+    def from_polar(magnitude, angle):
+        m = abs(magnitude)
+        return Vector(m*math.cos(angle), m*math.sin(angle))
+
     def length(self):
         return math.sqrt(self.x*self.x + self.y*self.y)
 
@@ -90,6 +95,9 @@ class Vector:
 
     def __rmul__(self, lhs):
         return self*lhs
+
+    def __eq__(self, rhs):
+        return self.x-0.0001<=rhs.x and rhs.x <= self.x+0.0001 and self.y-0.0001<=rhs.y and rhs.y <= self.y+0.0001
 
     def __repr__(self):
         return f"Vector({self.x}, {self.y})"

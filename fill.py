@@ -2,12 +2,13 @@ import math
 from vector import Vector
 from line_arc import *
 
+# Function assumes that polysegment is closed.
 def is_pt_in_closed_polysegment(pt, segments):
 
     # Create horizontal line from p0
     # Give it slight slope so that it is less likely that it is parallel
     # to a line segment (May not be necessery if parallel lines are treated correctly)
-    line = [pt, pt + Vector(1, 0.001)]
+    line = [pt, pt + Vector.from_polar(magnitude=1, angle=0.0001)]
     
     intersect_count = 0
     for seg in segments:
@@ -17,7 +18,7 @@ def is_pt_in_closed_polysegment(pt, segments):
         if is_line(seg):
             pA, tA = line_line_segment_intersect(line, seg)
         else:
-            pA, tA, pB, tB = line_segment_arc_intersect(line, seg)
+            pA, tA, pB, tB = line_arc_intersect(line, seg)
             # TODO: line may intersect arc twice need to test both
 
         # If intersect is found, only count it if it has t value > 0
@@ -35,8 +36,104 @@ def is_pt_in_closed_polysegment(pt, segments):
     else:
         return False
         
-def arc_fill(path, center, space):
-    pass
+def arc_fill(path, arc, space):
+    # Find all intersect
+    # if there are intersect
+    #    sort them
+    #    test if adjacent intersects are inside of outside the polysegment
+    #    if inside then keep them
+    # else: # if no intersects
+    #    keep whole circle
+
+    if len(path) == 0:# 
+        return []
+
+    c = center3(*arc) # TODO: make argument list rather than 3 points
+
+    r = space
+    fill_lines = []
+    is_done = False
+    cnt = 0
+    # while not is_done:
+    while cnt < 100:
+        cnt += 1
+        # Make a closed arc (circle)
+        circ = [Vector.from_polar(r, -math.pi) + c,
+                Vector.from_polar(r, 0) + c,
+                Vector.from_polar(r, math.pi) + c]
+
+        points = []
+        angles = []
+        for seg in path:
+
+
+            pA, pB = segment_intersect(circ, seg)
+
+            if pA is not None:
+                angle_A = (pA-c).angle()
+                points.append(pA)
+                angles.append(angle_A)
+
+            if pB is not None:
+                angle_B = (pB-c).angle()
+                points.append(pB)
+                angles.append(angle_B)
+
+
+        if len(points) == 0:
+            # check if middle circ point is inside of path
+            if is_pt_in_closed_polysegment(circ[1], path):
+                fill_lines.append(circ)
+            else:
+                # Path must be inside cicle now
+                is_done = True
+        elif len(points)%2 == 0:
+            # sort the points
+            # Find midpoint of each pair and save.
+        
+            # Determine params index order 
+            indexes = sorted(range(len(angles)), key=lambda k: angles[k])
+
+            # Sort points order of angles
+            sorted_points = [points[i] for i in indexes]
+            sorted_angles = [angles[i] for i in indexes]
+
+
+            # a0 = angles[0]
+            # a2 = angles[1]
+
+
+            a1 = (sorted_angles[0]+sorted_angles[1])/2
+            p = Vector.from_polar(r, a1)+c
+            print('Start end angles', sorted_angles[0], a1, sorted_angles[1], is_pt_in_closed_polysegment(p, path))
+            # breakpoint()
+            if not is_pt_in_closed_polysegment(p, path):
+                # make copy of first point and angle
+                # move point and angle copy to end of list and add 2pi to angle
+                sorted_points.append(sorted_points[0].copy())
+                sorted_angles.append(sorted_angles[0]+2*math.pi)
+                del(sorted_points[0])
+                del(sorted_angles[0])
+
+            
+            # Group adjacent fill_lines to form lines
+            num_elements = len(sorted_points)
+            num_fill_arcs = (num_elements//2) # // is an integer divide in python 7//2 = 3
+            N = num_fill_arcs*2 # number of elements not including last (odd) element
+
+            # breakpoint()
+            # Iterate over pairs of sorted points and group them to make a list of lines
+            for i in range(0, N-1, 2):
+                a1 = (sorted_angles[i]+sorted_angles[i+1])/2
+                p = Vector.from_polar(r, a1)+c
+                fill_lines.append([sorted_points[i], p, sorted_points[i+1]]) 
+                
+
+        r += space
+
+    return fill_lines
+
+
 
 def line_fill(path, vec, space):
 
@@ -74,12 +171,12 @@ def line_fill(path, vec, space):
         for seg in path:
 
             if is_line(seg):
-                pt, t0 = line_segment_intersect([q0, q1], seg)
+                pt, t0 = line_line_segment_intersect([q0, q1], seg)
                 if t0 is not None:
                     points.append(pt)
                     params.append(t0)
             elif is_arc(seg):
-                pt1, t1, pt2, t2 = line_segment_arc_intersect([q0, q1], seg)
+                pt1, t1, pt2, t2 = line_arc_intersect([q0, q1], seg)
                 # pt2, t2, _, _ = line_segment_arc_intersect([q1, q0], seg)
 
                 # Line was passed in in reverse order, so true paremetric value is obtained by subtracting from 1.0 
@@ -182,12 +279,12 @@ def path_bbox(path):
 
 
 ### TEST CODE
-# pt = Vector(5, 2)
-# segments = [
-#     [Vector(0,0), Vector(0, 5)],
-#     [Vector(0,5), Vector(5, 5)],
-#     [Vector(5,5), Vector(5, 0)],
-#     [Vector(5,0), Vector(0, 0)],
-#     ]
+pt = Vector(2, 2)
+segments = [
+    [Vector(0,0), Vector(0, 5)],
+    [Vector(0,5), Vector(5, 5)],
+    [Vector(5,5), Vector(5, 0)],
+    [Vector(5,0), Vector(0, 0)],
+    ]
 
-# is_pt_in_closed_polysegment(pt, segments)
+is_pt_in_closed_polysegment(pt, segments)
