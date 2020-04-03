@@ -248,6 +248,33 @@ def arc_arc_intersect(arc0, arc1):
 
 
 
+def arc_circ_intersect(arc, circ):
+    p0, p1 = circ_circ_intersect(arc, circ)
+
+    okay_0 = False
+    okay_1 = False
+
+    if p0 is not None:
+        if pt_angle_on_arc(arc, p0) is not None:
+            okay_0 = True
+
+    if p1 is not None:
+        if pt_angle_on_arc(arc, p1) is not None:
+            okay_1 = True
+
+    if okay_0 and okay_1:
+        return p0, p1
+
+    if okay_0:
+        return p0, None
+
+    if okay_1:
+        return p1, None
+
+    return None, None
+
+
+
 
 # This is the Non-"Functional" way to do the above
 def circ_circ_intersect(circA, circB):
@@ -385,6 +412,8 @@ def line_segment_circ_intersect(line_seg, circ):
     return (None, None)
 
 
+
+
 # Returns the first intersect of line and arc.
 # Note: search starts from line[0]
 def line_segment_arc_intersect(line_seg, arc):
@@ -460,12 +489,6 @@ def line_segment_intersect(seg0, seg1):
 
 # Calculates center of a 3 point circle
 def center3(p0, p1, p2):
-
-    # if closed arc
-    if p0 == p2:
-
-        # Assume two point circle
-        return (p0+p1)/2
 
     # midpoints
     m1 = (p0+p1)/2

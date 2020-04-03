@@ -188,9 +188,9 @@ def on_mouse(event, x, y, model, view):
         # for line in fill_lines:
         #     draw_line(view.img, line[0], line[1], YELLOW, arrow=True)
 
-        guide_arc = [Vector(200, 300),
-                     Vector(300, 200),
-                     Vector(200, 100)]
+        guide_arc = [Vector(600, 500),
+                     Vector(700, 400),
+                     Vector(600, 300)]
 
         fill_arcs = arc_fill(model.joined_offsets, guide_arc, 20)
         for arc in fill_arcs:

@@ -58,16 +58,21 @@ def arc_fill(path, arc, space):
     while cnt < 100:
         cnt += 1
         # Make a closed arc (circle)
-        circ = [Vector.from_polar(r, -math.pi) + c,
-                Vector.from_polar(r, 0) + c,
-                Vector.from_polar(r, math.pi) + c]
+        circ_rhs = [Vector(0, r) + c, Vector(r, 0) + c, Vector(0, -r) +c] # right semicircle
+        circ_lhs = [Vector(0, -r) + c, Vector(-r, 0) + c, Vector(0, r) +c] # left semicircle
 
         points = []
         angles = []
         for seg in path:
 
+            # pA, pB = segment_intersect(circ_rhs, seg)
+            
+            if is_line(seg):
+                pA, pB = line_segment_circ_intersect(seg, circ_rhs)
+            else:
+                pA, pB = arc_circ_intersect(seg, circ_rhs)
+                
 
-            pA, pB = segment_intersect(circ, seg)
 
             if pA is not None:
                 angle_A = (pA-c).angle()
@@ -82,8 +87,9 @@ def arc_fill(path, arc, space):
 
         if len(points) == 0:
             # check if middle circ point is inside of path
-            if is_pt_in_closed_polysegment(circ[1], path):
-                fill_lines.append(circ)
+            if is_pt_in_closed_polysegment(circ_rhs[1], path):
+                fill_lines.append(circ_rhs)
+                fill_lines.append(circ_lhs)
             else:
                 # Path must be inside cicle now
                 is_done = True
