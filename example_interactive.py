@@ -188,9 +188,9 @@ def on_mouse(event, x, y, model, view):
         # for line in fill_lines:
         #     draw_line(view.img, line[0], line[1], YELLOW, arrow=True)
 
-        guide_arc = [Vector(600, 500),
-                     Vector(700, 400),
-                     Vector(600, 300)]
+        guide_arc = [Vector(0, 1) + model.center,
+                     Vector(1, 0) + model.center,
+                     Vector(0, -1) + model.center]
 
         fill_arcs = arc_fill(model.joined_offsets, guide_arc, 20)
         for arc in fill_arcs:
@@ -212,6 +212,7 @@ class Model():
         self.angle = math.pi/4
         self.space = 20
         self.gap = 40 # Offset gap
+        self.center = Vector(600, 400)
     
 
 class View():
@@ -286,17 +287,21 @@ def main():
             on_mouse(cv2.EVENT_MOUSEMOVE, view.old_x, view.old_y, model, view)
         elif k == UP_KEY:
             model.space += 1
+            model.center.y += 10
             on_mouse("redraw", 0, 0, model, view)
             # time.sleep(0.1)
         elif k == DOWN_KEY:
             if model.space > 0:
                 model.space -= 1
+                model.center.y -= 10
             on_mouse("redraw", 0, 0, model, view)
         elif k == LEFT_KEY:
             model.angle += 2*math.pi/100
+            model.center.x -= 10
             on_mouse("redraw", 0, 0, model, view)
         elif k == RIGHT_KEY:
             model.angle -= 2*math.pi/100
+            model.center.x += 10
             on_mouse("redraw", 0, 0, model, view)
 
         # Call waitKey again to redraw canvas

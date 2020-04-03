@@ -37,36 +37,34 @@ def is_pt_in_closed_polysegment(pt, segments):
         return False
         
 def arc_fill(path, arc, space):
-    # Find all intersect
-    # if there are intersect
-    #    sort them
-    #    test if adjacent intersects are inside of outside the polysegment
-    #    if inside then keep them
-    # else: # if no intersects
-    #    keep whole circle
 
     if len(path) == 0:# 
         return []
+
+    tl, br = path_bbox(path)
+    # Get the other two corners of bounding box
+    bl = Vector(tl.x, br.y)
+    tr = Vector(br.x, tl.y)
 
     c = center3(*arc) # TODO: make argument list rather than 3 points
 
     r = space
     fill_lines = []
     while True:
-        # Make a closed arc (circle)
-        circ_rhs = [Vector(0, r) + c, Vector(r, 0) + c, Vector(0, -r) +c] # right semicircle
-        circ_lhs = [Vector(0, -r) + c, Vector(-r, 0) + c, Vector(0, r) +c] # left semicircle
+        # Make a left and right semicircles/arcs
+        arc_rhs = [Vector(0, r) + c, Vector(r, 0) + c, Vector(0, -r) +c]
+        arc_lhs = [Vector(0, -r) + c, Vector(-r, 0) + c, Vector(0, r) +c] 
 
         points = []
         angles = []
         for seg in path:
 
-            # pA, pB = segment_intersect(circ_rhs, seg)
+            # pA, pB = segment_intersect(arc_rhs, seg)
             
             if is_line(seg):
-                pA, pB = line_segment_circ_intersect(seg, circ_rhs)
+                pA, pB = line_segment_circ_intersect(seg, arc_rhs)
             else:
-                pA, pB = arc_circ_intersect(seg, circ_rhs)
+                pA, pB = arc_circ_intersect(seg, arc_rhs)
                 
 
 
@@ -83,12 +81,17 @@ def arc_fill(path, arc, space):
 
         if len(points) == 0:
             # check if middle circ point is inside of path
-            if is_pt_in_closed_polysegment(circ_rhs[1], path):
-                fill_lines.append(circ_rhs)
-                fill_lines.append(circ_lhs)
-            elif len(fill_lines) > 0:
-                # Path must be inside cicle now
-                break
+            if is_pt_in_closed_polysegment(arc_rhs[1], path):
+                fill_lines.append(arc_rhs)
+                fill_lines.append(arc_lhs)
+            else:
+                if (tl-c).length() < r and \
+                   (tr-c).length() < r and \
+                   (bl-c).length() < r and \
+                   (br-c).length() < r:
+                    # If path bbox is inside circle
+                    break
+
         elif len(points)%2 == 0:
             # sort the points
             # Find midpoint of each pair and save.
@@ -165,25 +168,22 @@ def line_fill(path, vec, space):
         u = vec.norm()  # Unit vec
 
         p = (p0+t*(p1-p0)) # Point on line p0-p1
+
         q0 = p-r*u  # Start of vec line
         q1 = p+r*u  # End of vec line
-
+        line = [q0, q1]
+        
         points = []
         params = []
         for seg in path:
 
             if is_line(seg):
-                pt, t0 = line_line_segment_intersect([q0, q1], seg)
+                pt, t0 = line_line_segment_intersect(line, seg)
                 if t0 is not None:
                     points.append(pt)
                     params.append(t0)
             elif is_arc(seg):
-                pt1, t1, pt2, t2 = line_arc_intersect([q0, q1], seg)
-                # pt2, t2, _, _ = line_segment_arc_intersect([q1, q0], seg)
-
-                # Line was passed in in reverse order, so true paremetric value is obtained by subtracting from 1.0 
-                # if t2 is not None:
-                    # t2 = 1-t2
+                pt1, t1, pt2, t2 = line_arc_intersect(line, seg)
 
                 if t1 is not None:
                     points.append(pt1)
@@ -198,7 +198,6 @@ def line_fill(path, vec, space):
                         params.append(t2)
 
 
-        # Do some dark python magic
         
         # Determine params index order 
         indexes = sorted(range(len(params)), key=lambda k: params[k])
