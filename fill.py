@@ -52,11 +52,7 @@ def arc_fill(path, arc, space):
 
     r = space
     fill_lines = []
-    is_done = False
-    cnt = 0
-    # while not is_done:
-    while cnt < 100:
-        cnt += 1
+    while True:
         # Make a closed arc (circle)
         circ_rhs = [Vector(0, r) + c, Vector(r, 0) + c, Vector(0, -r) +c] # right semicircle
         circ_lhs = [Vector(0, -r) + c, Vector(-r, 0) + c, Vector(0, r) +c] # left semicircle
@@ -90,9 +86,9 @@ def arc_fill(path, arc, space):
             if is_pt_in_closed_polysegment(circ_rhs[1], path):
                 fill_lines.append(circ_rhs)
                 fill_lines.append(circ_lhs)
-            else:
+            elif len(fill_lines) > 0:
                 # Path must be inside cicle now
-                is_done = True
+                break
         elif len(points)%2 == 0:
             # sort the points
             # Find midpoint of each pair and save.
