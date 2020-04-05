@@ -1,4 +1,3 @@
-
 import math
 import numpy as np
 import cv2
@@ -16,6 +15,7 @@ WINDOW_HEIGHT = 800
 WINDOW_WIDTH = 1200
 
 WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 GRAY = (127, 127, 127)
 RED = (0, 0, 255)
 GREEN = (0, 255, 0)
@@ -79,24 +79,51 @@ def draw_path(img, path, color=WHITE):
             draw_arc(img, *seg, color, 0.001, arrow=True)
             
 GRID_SIZE = 20
-def draw_grid(img):
+def draw_grid(img, x=0, y=0):
+
+    font_scale = 0.6
+
+    # Grid
+    img[::GRID_SIZE,::GRID_SIZE,:] = GRAY
+
+    # Help text
     y = 10
-    dy = 30
-   
-    text = ['(A)rc', '(L)ine', '(P)lus Offset', '(M)inus Offset', '(D)elete', '(Q)uit']
+    dy = 25
+    text = [
+        '* PATH/OFFSET *',
+        '  (a)rc',
+        '  (l)ine',
+        '  (p)lus offset',
+        '  (m)inus offset',
+        ' ',
+        '* FILL *',
+        '  (A)rc',
+        '  (L)ine',
+        '  (+/-) gap size',
+        '  (Arrow Keys) position',
+        ' ',
+        '* MAIN *',
+        '  (d)elete',
+        '  (q)uit',
+    ]
     for line in text:
         y += dy
         cv2.putText(img, text=line, org=(0, y),fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                    fontScale=0.5, color=YELLOW, lineType=cv2.LINE_AA)
-    
-    img[::GRID_SIZE,::GRID_SIZE,:] = GRAY
+                    fontScale=font_scale, color=YELLOW, lineType=cv2.LINE_AA)
+    draw_mouse_position(img, x, y)
 
-            
+def draw_mouse_position(img, x, y):
+    # Mouse position
+    font_scale = 0.6
+    cv2.rectangle(img, pt1=(0, WINDOW_HEIGHT-50), pt2=(140, WINDOW_HEIGHT), color=BLACK, thickness=cv2.FILLED)
+    cv2.putText(img, text=f'({x:4d}, {y:4d})', org=(0, WINDOW_HEIGHT-20),fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=font_scale, color=YELLOW, lineType=cv2.LINE_AA)
+
 # Update key points on click
 def on_mouse(event, x, y, model, view):
 
     x = round(x/GRID_SIZE)*GRID_SIZE
-    y = round(y/GRID_SIZE)*GRID_SIZE
+    y = round(y/GRID_SIZE)*GRID_SIZE-1
 
     view.old_x = x
     view.old_y = y
@@ -134,7 +161,7 @@ def on_mouse(event, x, y, model, view):
                     draw_arc(view.new_img, guide[0], guide[1], guide[2], GRAY, arrow=True)
                     draw_arc(view.new_img, offset[0], offset[1], offset[2], DARK_GREEN, arrow=True)
 
-
+        draw_mouse_position(view.new_img, x, y)
 
         cv2.imshow('Canvas', view.new_img)
 
@@ -170,7 +197,7 @@ def on_mouse(event, x, y, model, view):
 
         view.img[:, :, :] = 0
         # draw grid
-        draw_grid(view.img)
+        draw_grid(view.img, x, y)
         
         model.joined_offsets = offset_path(model.path)
 
@@ -183,18 +210,19 @@ def on_mouse(event, x, y, model, view):
             # draw_rect(view.img, bbox[0], bbox[1])
 
 
-        # vec = Vector.from_polar(1, model.angle)
-        # fill_lines = line_fill(model.joined_offsets, vec, model.space)
-        # for line in fill_lines:
-        #     draw_line(view.img, line[0], line[1], YELLOW, arrow=True)
+        if view.fill == LINE:
+            vec = Vector.from_polar(1, model.angle)
+            fill_lines = line_fill(model.joined_offsets, vec, model.fill_space)
+            for line in fill_lines:
+                draw_line(view.img, line[0], line[1], YELLOW, arrow=True)
+        else:
+            guide_arc = [Vector(0, 1) + model.center,
+                         Vector(1, 0) + model.center,
+                         Vector(0, -1) + model.center]
 
-        guide_arc = [Vector(0, 1) + model.center,
-                     Vector(1, 0) + model.center,
-                     Vector(0, -1) + model.center]
-
-        fill_arcs = arc_fill(model.joined_offsets, guide_arc, 20)
-        for arc in fill_arcs:
-            draw_arc(view.img, arc[0], arc[1], arc[2], color=YELLOW, arrow=True)
+            fill_arcs = arc_fill(model.joined_offsets, guide_arc, model.fill_space)
+            for arc in fill_arcs:
+                draw_arc(view.img, arc[0], arc[1], arc[2], color=YELLOW, arrow=True)
 
 
         # Print path to avoid having to draw one every time.
@@ -210,17 +238,18 @@ class Model():
         self.path = path
         self.joined_offsets = []
         self.angle = math.pi/4
-        self.space = 20
+        self.fill_space = 20
         self.gap = 40 # Offset gap
         self.center = Vector(600, 400)
     
 
 class View():
-    def __init__(self, width, height, mode=LINE, guide=[]):
+    def __init__(self, width, height, mode=LINE, fill=LINE, guide=[]):
         self.img  = np.zeros((height, width, 3), dtype=np.uint8)
         self.new_img = np.zeros_like(self.img)
         draw_grid(self.img)
         self.mode = mode
+        self.fill = fill
         self.guide = guide
         self.old_x = 0
         self.old_y = 0
@@ -273,6 +302,12 @@ def main():
             view.mode = LINE
         elif k == ord('a'): # Arc
             view.mode = ARC
+        elif k == ord('L'): # Line Fill
+            view.fill = LINE
+            on_mouse("redraw", 0, 0, model, view)
+        elif k == ord('A'): # Arc Fill
+            view.fill = ARC
+            on_mouse("redraw", 0, 0, model, view)
         elif k == ord('d'): # Delete
             view.clear()
             model.path = []
@@ -285,14 +320,18 @@ def main():
             if model.gap > 5:
                 model.gap -= 5
             on_mouse(cv2.EVENT_MOUSEMOVE, view.old_x, view.old_y, model, view)
+        elif k == ord('+'):
+            model.fill_space += 1
+            on_mouse("redraw", 0, 0, model, view)
+        elif k == ord('-'):
+            if model.fill_space > 0:
+                model.fill_space -= 1
+            on_mouse("redraw", 0, 0, model, view)
         elif k == UP_KEY:
-            model.space += 1
             model.center.y += 10
             on_mouse("redraw", 0, 0, model, view)
-            # time.sleep(0.1)
         elif k == DOWN_KEY:
-            if model.space > 0:
-                model.space -= 1
+            if model.fill_space > 0:
                 model.center.y -= 10
             on_mouse("redraw", 0, 0, model, view)
         elif k == LEFT_KEY:

@@ -103,15 +103,9 @@ def arc_fill(path, arc, space):
             sorted_points = [points[i] for i in indexes]
             sorted_angles = [angles[i] for i in indexes]
 
-
-            # a0 = angles[0]
-            # a2 = angles[1]
-
-
             a1 = (sorted_angles[0]+sorted_angles[1])/2
             p = Vector.from_polar(r, a1)+c
-            print('Start end angles', sorted_angles[0], a1, sorted_angles[1], is_pt_in_closed_polysegment(p, path))
-            # breakpoint()
+
             if not is_pt_in_closed_polysegment(p, path):
                 # make copy of first point and angle
                 # move point and angle copy to end of list and add 2pi to angle
