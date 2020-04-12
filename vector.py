@@ -1,4 +1,5 @@
 import math
+MAX_LEN_ERROR = 1e-3 # 1e-3 th of a mm
 
 class Vector:
     def __init__(self, x=0, y=0):
@@ -97,7 +98,10 @@ class Vector:
         return self*lhs
 
     def __eq__(self, rhs):
-        return self.x-0.0001<=rhs.x and rhs.x <= self.x+0.0001 and self.y-0.0001<=rhs.y and rhs.y <= self.y+0.0001
+        return self.x-MAX_LEN_ERROR <= rhs.x and \
+            rhs.x <= self.x + MAX_LEN_ERROR and \
+            self.y - MAX_LEN_ERROR <= rhs.y and \
+            rhs.y <= self.y + MAX_LEN_ERROR
 
     def __repr__(self):
         return f"Vector({self.x}, {self.y})"

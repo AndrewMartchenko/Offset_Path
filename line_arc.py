@@ -1,8 +1,8 @@
 import math
 from vector import Vector
 
-MAX_LEN_ERROR = 1/1000 # 1/1000th of a mm
-MAX_ANGLE_ERROR =  (1/1000)*math.pi/180 # 1/1000th of a degree
+MAX_LEN_ERROR = 1e-3 # 1e-3 th of a mm
+MAX_ANGLE_ERROR =  (1e-3)*math.pi/180 # 1e-3 th of a degree
 
 NUM_ITER = 20
 
@@ -300,10 +300,16 @@ def circ_circ_intersect(circA, circB):
 
         p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
         dpdt =  ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
-        e =  rb*rb - Vector.dot(p-cb, p-cb)
+        e =  rb*rb - Vector.dot(p-cb, p-cb) # Squared error
         dedt =  -2*Vector.dot(dpdt, p-cb)
         t = t - e/dedt
-        
+        print(i, end=' ')
+        # Break if error is small enough
+        if abs(math.sqrt(abs(e))) < MAX_LEN_ERROR:
+            print(i, 'Early Finish')
+            break
+
+    print('')
     pt1 = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
 
     pt2 = mirror_pt([ca, cb], pt1)
@@ -343,6 +349,10 @@ def line_circ_intersect(line, circ):
         e = r*r - Vector.dot(p-c, p-c)
         dedt = -2*Vector.dot(dpdt, p-c)
         t = t - e/dedt
+        # Break if error is small enough
+        if abs(math.sqrt(abs(e))) < MAX_LEN_ERROR:
+            break
+
 
     tA = t
     pA = p0+tA*(p1-p0)
