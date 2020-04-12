@@ -296,18 +296,30 @@ def circ_circ_intersect(circA, circB):
     
     
     t = 0.0
-    for i in range(NUM_ITER):
+    i = 0
+    while i < NUM_ITER:
 
         p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
         dpdt =  ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
         e =  rb*rb - Vector.dot(p-cb, p-cb) # Squared error
         dedt =  -2*Vector.dot(dpdt, p-cb)
+
+        # If gradient is zero
+        if dedt == 0:
+            # If error is small enough . Minimum found.
+            if abs(math.sqrt(e)) < MAX_LEN_ERROR:
+                break
+            else:
+                # Bad starting point. 
+                t += 0.001 # nudge t a bit and continue
+                i = 0 # Reset i
+                continue
         t = t - e/dedt
-        print(i, end=' ')
         # Break if error is small enough
         if abs(math.sqrt(abs(e))) < MAX_LEN_ERROR:
-            print(i, 'Early Finish')
             break
+
+        i += 1
 
     print('')
     pt1 = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
@@ -320,13 +332,13 @@ def segment_intersect(s0, s1):
     pA = None
     pB = None
     if is_line(s0) and is_line(s1):
-        pA = line_segment_intersect(s0[::-1], s1)
+        pA = line_segment_intersect(s0, s1)
     elif is_line(s0) and is_arc(s1):
-        pA, pB = line_segment_arc_intersect(s0[::-1], s1)
+        pA, pB = line_segment_arc_intersect(s0, s1)
     elif is_arc(s0) and is_line(s1):
-        pA, pB = line_segment_arc_intersect(s1, s0[::-1])
+        pA, pB = line_segment_arc_intersect(s1, s0)
     elif is_arc(s0) and is_arc(s1):
-        pA,  pB= arc_arc_intersect(s0[::-1], s1)
+        pA,  pB= arc_arc_intersect(s0, s1)
 
     return pA, pB
 
@@ -342,16 +354,30 @@ def line_circ_intersect(line, circ):
         return (None, None, None, None)
     
     t = 0.0
-    for i in range(NUM_ITER):
+    i = 0
+    while i < NUM_ITER:
 
         p = p0+t*(p1-p0)
         dpdt = p1-p0
         e = r*r - Vector.dot(p-c, p-c)
         dedt = -2*Vector.dot(dpdt, p-c)
+        
+        # If gradient is zero
+        if dedt == 0:
+            # If error is small enough . Minimum found.
+            if abs(math.sqrt(e)) < MAX_LEN_ERROR:
+                break
+            else:
+                # Bad starting point.
+                t += 0.001 # nudge t a bit and continue
+                i = 0 # Reset i
+                continue
         t = t - e/dedt
         # Break if error is small enough
         if abs(math.sqrt(abs(e))) < MAX_LEN_ERROR:
             break
+
+        i += 1
 
 
     tA = t
@@ -468,10 +494,16 @@ def line_intersect(line0, line1):
     # p = p0 + t*v0
     # q = q0 + s*v1
 
-    # If lines are co-linear
+
+    # If lines are coincident
+    if is_coincident(line0, line1):
+        return (p1, 1, 0)
+
+    # If lines are parallel
     if Vector.cross(v1, v0) == 0:
         # lines intersect everywhere
-        return (p1, 1, 0) # Not sure if we should return the end point on line0 when lines are co-linear
+        return (None, None, None) # Not sure if we should return the end point on line0 when lines are co-linear
+
 
         
     # solve for s and t when p and q are equal
@@ -482,14 +514,20 @@ def line_intersect(line0, line1):
 
 def line_line_segment_intersect(line, seg):
     pt, t, s = line_intersect(line, seg)
+    if pt is None:
+        return None, None
+    
     if 0 <= s and s <= 1:
         return pt, t
     else:
-        return (None, None)
+        return None, None
 
 
 def line_segment_intersect(seg0, seg1):
     pt, t, s = line_intersect(seg0, seg1)
+
+    if pt is None:
+        return None
 
     if 0 <= t and t <= 1 and 0 <= s and s <= 1:
         return pt
@@ -591,6 +629,8 @@ def project_pt_on_line(line, pt):
     proj_pt = p0+proj_dist*u
     return proj_pt
 
+def is_coincident(a, b):
+    return is_pt_on_line(a, b[0]) and is_pt_on_line(a, b[1])
 
 
 

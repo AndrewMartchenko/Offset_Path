@@ -237,7 +237,7 @@ class Model():
     def __init__(self, path=[], guide=[]):
         self.path = path
         self.joined_offsets = []
-        self.angle = math.pi/4
+        self.angle = 0 #math.pi/4
         self.fill_space = 20
         self.gap = 40 # Offset gap
         self.center = Vector(600, 400)
