@@ -98,10 +98,7 @@ class Vector:
         return self*lhs
 
     def __eq__(self, rhs):
-        return self.x-MAX_LEN_ERROR <= rhs.x and \
-            rhs.x <= self.x + MAX_LEN_ERROR and \
-            self.y - MAX_LEN_ERROR <= rhs.y and \
-            rhs.y <= self.y + MAX_LEN_ERROR
+        return (self-rhs).length() < MAX_LEN_ERROR
 
     def __repr__(self):
         return f"Vector({self.x}, {self.y})"
