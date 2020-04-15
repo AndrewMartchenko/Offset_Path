@@ -1,7 +1,9 @@
 import math
 from vector import Vector
 
-MAX_LEN_ERROR = 1e-3 # 1e-3 th of a mm
+MAX_LEN_ERROR = Vector.max_error()/10 # Make sure length error is smaller than vector error
+
+# TODO: Make this in mm not in radians.!!
 MAX_ANGLE_ERROR =  (1e-3)*math.pi/180 # 1e-3 th of a degree
 
 NUM_ITER = 20

@@ -1,10 +1,15 @@
 import math
-MAX_LEN_ERROR = 1e-3 # 1e-3 th of a mm
+
+MAX_ERROR = 1e-3 # mm
 
 class Vector:
     def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
+
+    @staticmethod
+    def max_error():
+        return MAX_ERROR
 
     @staticmethod
     def from_polar(magnitude, angle):
@@ -40,10 +45,6 @@ class Vector:
         return self.norm().tangent()
 
     @staticmethod
-    def is_collinear(a, b, c):
-        return (Vector.cross(b-a, c-a) == 0)
-
-    @staticmethod
     def dot(lhs, rhs):
         return lhs.x*rhs.x + lhs.y*rhs.y
 
@@ -59,7 +60,7 @@ class Vector:
         # Calculate the direction of the angle
         delta = 1.0 if Vector.cross(u0, u1) > 0.0 else -1.0
         u0_dot_u1 = Vector.dot(u0, u1)
-        # Due to roundoff error reult could be 1.000002
+        # Due to roundoff error result could be 1.000002
         # so need to bring it back to 1.0 for it to be in range
         # of acos()
         if u0_dot_u1 > 1.0: 

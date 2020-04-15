@@ -172,6 +172,11 @@ def line_fill(path, vec, space):
         for seg in path:
 
             if is_line(seg):
+
+                # if lines are coincident, then continue on to next segment
+                if is_coincident(line, seg):
+                    continue
+                
                 pt, t0 = line_line_segment_intersect(line, seg)
                 if t0 is not None:
                     points.append(pt)
