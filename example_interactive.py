@@ -22,7 +22,7 @@ GREEN = (0, 255, 0)
 DARK_GREEN = (0, 127, 0)
 YELLOW = (0, 255, 255)
 
-def draw_arrow_head(img, p, v, size=5, color=WHITE):
+def draw_arrow_head(img, p, v, size=10, color=WHITE):
     u = v.norm()
     a = size*u.rotate(0.9*math.pi) + p
     b = size*u.rotate(-0.9*math.pi) + p
@@ -154,8 +154,13 @@ def on_mouse(event, x, y, model, view):
                     draw_line(view.new_img, guide[0], guide[1], GRAY, arrow=True)
                     draw_line(view.new_img, offset[0], offset[1], DARK_GREEN, arrow=True)
             elif len(view.guide) == 2:
-                # if (view.guide[1].x != x) and (view.guide[1].y != y):
-                if not Vector.is_collinear(view.guide[0], view.guide[1], xy):
+                if is_coincident(view.guide[:2], [view.guide[1], xy]):
+                    guide = [view.guide[0], xy]
+                    offset = offset_segment(guide, model.gap)
+                    draw_line(view.new_img, guide[0], guide[1], GRAY, arrow=True)
+                    draw_line(view.new_img, offset[0], offset[1], DARK_GREEN, arrow=True)
+
+                else:
                     guide = [view.guide[0], view.guide[1], xy]
                     offset = offset_segment(guide, model.gap)
                     draw_arc(view.new_img, guide[0], guide[1], guide[2], GRAY, arrow=True)
@@ -187,7 +192,10 @@ def on_mouse(event, x, y, model, view):
             if numel < 2:
                 view.guide.append(xy)
             else:
-                model.path.append([[view.guide[0], view.guide[1], xy], model.gap])
+                if is_coincident(view.guide[:2], [view.guide[1], xy]):
+                    model.path.append([[view.guide[0], xy], model.gap])
+                else:
+                    model.path.append([[view.guide[0], view.guide[1], xy], model.gap])
                 view.guide[0] = xy
                 del(view.guide[1])
 
@@ -238,8 +246,8 @@ class Model():
         self.path = path
         self.joined_offsets = []
         self.angle = 0 #math.pi/4
-        self.fill_space = 20
-        self.gap = 40 # Offset gap
+        self.fill_space = 5
+        self.gap = 20 # Offset gap
         self.center = Vector(600, 400)
     
 
@@ -276,7 +284,8 @@ def main():
     model = Model()
     model.path = []
 
-    # model.path = [[[Vector(300, 279), Vector(240, 499), Vector(420, 439)], 40], [[Vector(420, 439), Vector(520, 279), Vector(760, 279)], 40], [[Vector(760, 279), Vector(800, 399), Vector(780, 519)], 75], [[Vector(780, 519), Vector(900, 419), Vector(900, 319)], 100], [[Vector(900, 319), Vector(920, 139), Vector(940, 79)], 50]]
+    # model.path = [[[Vector(480, 280), Vector(480, 460)], 20], [[Vector(480, 460), Vector(720, 460)], 20], [[Vector(720, 460), Vector(720, 320)], 20], [[Vector(720, 320), Vector(860, 320)], 20], [[Vector(860, 320), Vector(860, 480)], 20], [[Vector(860, 480), Vector(1040, 480)], 20], [[Vector(1040, 480), Vector(1040, 320)], 20], [[Vector(1040, 320), Vector(1040, 200)], 20], [[Vector(1040, 200), Vector(700, 200)], 20], [[Vector(700, 200), Vector(480, 200)], 20], [[Vector(480, 200), Vector(480, 280)], 20]]
+
 
     
     
@@ -324,7 +333,7 @@ def main():
             model.fill_space += 1
             on_mouse("redraw", 0, 0, model, view)
         elif k == ord('-'):
-            if model.fill_space > 0:
+            if model.fill_space > 1:
                 model.fill_space -= 1
             on_mouse("redraw", 0, 0, model, view)
         elif k == UP_KEY:
