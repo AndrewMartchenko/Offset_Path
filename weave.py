@@ -1,6 +1,7 @@
 from vector import Vector
 from line_arc import arc_from_points
 import math
+import numpy as np
 
 #             dL
 #  W......  ------                                                         
@@ -60,8 +61,10 @@ def weave(x, L, W, dM, dL, dR):
     return 0
 
 # d is the distance along line
-def line_weave(d, L, W, dM, dL, dR, line):
+def line_weave(d, L, W, dM, dL, dR, line, angles=((0,0,0),(0,0,0))):
     p0, p1 = line
+    a0 ,b0 ,c0 = angles[0]
+    a1 ,b1 ,c1 = angles[1]
 
     # Calculate weave
     y = weave(d, L, W, dM, dL, dR)
@@ -73,15 +76,20 @@ def line_weave(d, L, W, dM, dL, dR, line):
     u = (p1-p0).normal()
 
     # Point on line
-    pt = p0+t*(p1-p0)
+    pt = p0 + t*(p1-p0)
     
     # Stretch away from pt by y in direction u
     xy = y*u + pt
+
+    # Linear interpolation through angles
+    a = a0 + t*(a1-a0)
+    b = b0 + t*(b1-b0)
+    c = c0 + t*(c1-c0)
     
-    return xy
+    return xy, (a, b, c)
 
 # d is the distance along arc
-def arc_weave(d, L, W, dM, dL, dR, arcq):
+def arc_weave(d, L, W, dM, dL, dR, arc):
 # x is the distance along the circumfrance of the arc
 
     p0, p1, p2 = arc
@@ -118,19 +126,33 @@ def arc_perimeter(arc):
     return r*abs(a2-a0)
 
 
+# Returns 3D rotation matrix
+def rot_mat(angle_a, angle_b, angle_c):
+    c = math.cos(angle_a)
+    s = math.sin(angle_a)
+    A = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+    c = math.cos(angle_b)
+    s = math.sin(angle_b)
+    B = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+    c = math.cos(angle_c)
+    s = math.sin(angle_c)
+    C = np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
+    R = np.matmul(A, np.matmul(B, C))
+    return R
+
 
 
 
 # if __name__ == '__main__':
 if True:
     import matplotlib.pyplot as plt
-
+    from mpl_toolkits.mplot3d import Axes3D
 
     # Setup plot
     fig = plt.figure()
 
     ax1 = fig.add_subplot(211)
-    ax2 = fig.add_subplot(223)
+    ax2 = fig.add_subplot(223, projection='3d')
     ax3 = fig.add_subplot(224)
 
 
@@ -168,24 +190,41 @@ if True:
     dM = 3 # Dwell middle length 
     dL = 2 # Dwell left length
     dR = 2 # Dwell right length
-    line = [Vector(0, 0), Vector(200, 200)] 
+    line = [Vector(0, 0), Vector(200, 200)]
+    angles0 = (0, 0, 0)
+    angles1 = (math.pi/4, 0, math.pi/4)
 
     # Calculate perimeter of arc
     P = (line[1]-line[0]).length()
 
     x = []
     y = []
-
+    xx = np.array([10, 0, 0])
+    yy = np.array([0, 10, 0])
+    zz = np.array([0, 0, 10])
     N = 1000 # Number of arc samples
     for i in range(1000):
         d = P*i/N # Distance along line
-        pt = line_weave(d, L, W, dM, dL, dR, line)
+        pt, angles = line_weave(d, L, W, dM, dL, dR, line, (angles0, angles1))
         x.append(pt.x)
         y.append(pt.y)
 
+        # Every 100th point, draw an axis
+        
+        if i%100==0:
+            a, b, c = angles
+            Rxx = np.matmul(rot_mat(a, b, c), xx.T)
+            ax2.plot([pt.x, pt.x+Rxx[0]], [pt.y, pt.y+Rxx[1]], [0, 0+Rxx[2]], linewidth=1.0, color='r')
+            Ryy = np.matmul(rot_mat(a, b, c), yy.T)
+            ax2.plot([pt.x, pt.x+Ryy[0]], [pt.y, pt.y+Ryy[1]], [0, 0+Ryy[2]], linewidth=1.0, color='g')
+            Rzz = np.matmul(rot_mat(a, b, c), zz.T)
+            ax2.plot([pt.x, pt.x+Rzz[0]], [pt.y, pt.y+Rzz[1]], [0, 0+Rzz[2]], linewidth=1.0, color='orange')
+
     # Make arc plot
     ax2.plot(x, y, linewidth=1.0)
-    ax2.set(xlim=[0, 200], ylim=[0, 200], aspect=1, adjustable='box')
+    ax2.set(xlim=[0, 200], ylim=[0, 200], zlim=[0, 200], adjustable='box')
+    ax2.set_axis_off()
+
 
 
 
