@@ -1,6 +1,7 @@
 from vector import Vector
 from line_arc import arc_from_points, pt_angle_on_arc
 import math
+from math import sin, cos, atan2, asin, pi
 import numpy as np
 
 #             dL
@@ -68,7 +69,35 @@ def angle_lerp(abc0, abc1, t):
     b = b0 + t*(b1-b0)
     c = c0 + t*(c1-c0)
     return (a, b, c)
+
+# This is a slightly modified version of Wikipedia's version of SLERP
+def slerp(v0, v1, t):
+    """Spherical linear interpolation."""
+    # >>> slerp([1,0,0,0], [0,0,0,1], 0.2)
+
+    v0 = np.array(v0)
+    v1 = np.array(v1)
+    dot = np.sum(v0 * v1)
+
+    if dot < 0.0:
+        v1 = -v1
+        dot = -dot
     
+    DOT_THRESHOLD = 0.9995
+    if dot > DOT_THRESHOLD:
+        result = v0 + t*(v1 - v0)
+        return result/np.linalg.norm(result)
+    
+    theta_0 = np.arccos(dot)
+    sin_theta_0 = np.sin(theta_0)
+
+    theta = theta_0 * t
+    sin_theta = np.sin(theta)
+    
+    s0 = np.cos(theta) - dot * sin_theta / sin_theta_0
+    s1 = sin_theta / sin_theta_0
+    return (s0*v0) + (s1*v1)
+
 # d is the distance along line
 def line_weave(d, L, W, dM, dL, dR, line, abcs=((0,0,0),(0,0,0))):
     p0, p1 = line
@@ -89,7 +118,10 @@ def line_weave(d, L, W, dM, dL, dR, line, abcs=((0,0,0),(0,0,0))):
     xy = y*u + pt
 
     # Linear interpolation through abcs
-    abc = angle_lerp(abcs[0], abcs[1], t)
+    if len(abcs[0]) == 3:
+        abc = angle_lerp(abcs[0], abcs[1], t)
+    else:
+        abc = slerp(abcs[0], abcs[1], t)
     
     return xy, abc
 
@@ -123,10 +155,18 @@ def arc_weave(d, L, W, dM, dL, dR, arc, abcs=((0,0,0), (0,0,0), (0,0,0))):
     a = a0+angle
     if a < a1:
         t = (a-a0)/(a1-a0)
-        abc = angle_lerp(abcs[0], abcs[1], t)
+        # Linear interpolation through abcs
+        if len(abcs[0]) == 3:
+            abc = angle_lerp(abcs[0], abcs[1], t)
+        else:
+            abc = slerp(abcs[0], abcs[1], t)
     else:
         t = (a-a1)/(a2-a1)
-        abc = angle_lerp(abcs[1], abcs[2], t)
+        # Linear interpolation through abcs
+        if len(abcs[0]) == 3:
+            abc = angle_lerp(abcs[1], abcs[2], t)
+        else:
+            abc = slerp(abcs[1], abcs[2], t)
 
     # Stretch unit vector by r+y
     xy = (r+y)*v + c
@@ -142,63 +182,86 @@ def arc_perimeter(arc):
 
 # Returns 3D rotation matrix
 def rot_mat(angle_a, angle_b, angle_c):
-    c = math.cos(angle_a)
-    s = math.sin(angle_a)
+    c = cos(angle_a)
+    s = sin(angle_a)
     A = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
-    c = math.cos(angle_b)
-    s = math.sin(angle_b)
+    c = cos(angle_b)
+    s = sin(angle_b)
     B = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
-    c = math.cos(angle_c)
-    s = math.sin(angle_c)
+    c = cos(angle_c)
+    s = sin(angle_c)
     C = np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
     R = np.matmul(A, np.matmul(B, C))
     return R
 
+def quaternion_to_euler(quat):
+    q0, q1, q2, q3 = quat
+    a = atan2(2*(q0*q3 + q1*q2), 1-2*(q2*q2+q3*q3))
+    b = asin(2*(q0*q2 - q3*q1))
+    c = atan2(2*(q0*q1 + q2*q3), 1-2*(q1*q1+q2*q2))
 
 
+    return (a, b, c)
+
+def euler_to_quaternion(abc):
+    a, b, c = abc
+    q0 =cos(c/2)*cos(b/2)*cos(a/2)+sin(c/2)*sin(b/2)*sin(a/2)
+    q1 =sin(c/2)*cos(b/2)*cos(a/2)-cos(c/2)*sin(b/2)*sin(a/2)
+    q2 =cos(c/2)*sin(b/2)*cos(a/2)+sin(c/2)*cos(b/2)*sin(a/2)
+    q3 =cos(c/2)*cos(b/2)*sin(a/2)-sin(c/2)*sin(b/2)*cos(a/2)
+    return (q0, q1, q2, q3)
 
 # if __name__ == '__main__':
 if True:
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
 
-    # Setup plot
-    fig = plt.figure()
-
-    ax1 = fig.add_subplot(211)
-    ax2 = fig.add_subplot(223, projection='3d')
-    ax3 = fig.add_subplot(224, projection='3d')
 
 
 
-    ## WEAVE EXAMPLE
 
-    L = 20 # Length or period of weave
-    W = 5  # Width or amplitude of weave
-    dM = 3 # Dwell middle length 
-    dL = 2 # Dwell left length
-    dR = 2 # Dwell right length
 
-    # Distance of weld weave
-    D = 400
 
-    x = []
-    y = []
+    demo = 3
 
-    N = 1000 # Number of arc samples
-    for i in range(1000):
-        xx = D*i/N
-        yy = weave(xx, L, W, dM, dL, dR)
-        x.append(xx)
-        y.append(yy)
+    if demo == 1:
+        ## WEAVE EXAMPLE
+        # Setup plot
+        fig = plt.figure()
 
-    # Make line plot
-    ax1.plot(x, y, linewidth=1.0)
-    ax1.set(xlim=[0, D], ylim=[-2*W, 2*W], aspect='equal', adjustable='box')
+        ax = fig.add_subplot(111)
+        L = 20 # Length or period of weave
+        W = 5  # Width or amplitude of weave
+        dM = 3 # Dwell middle length 
+        dL = 2 # Dwell left length
+        dR = 2 # Dwell right length
+
+        # Distance of weld weave
+        D = 400
+
+        x = []
+        y = []
+
+        N = 1000 # Number of arc samples
+        for i in range(1000):
+            xx = D*i/N
+            yy = weave(xx, L, W, dM, dL, dR)
+            x.append(xx)
+            y.append(yy)
+
+        # Make line plot
+        ax.plot(x, y, linewidth=1.0)
+        ax.set(xlim=[0, D], ylim=[-2*W, 2*W], aspect='equal', adjustable='box')
+        # Show plot
+        plt.tight_layout()
+        plt.show()
 
 
     ## LINE WEAVE EXAMPLE
+    # Setup plot
+    fig2 = plt.figure(2)
 
+    ax2 = fig2.add_subplot(111, projection='3d')
     L = 20 # Length or period of weave
     W = 5  # Width or amplitude of weave
     dM = 3 # Dwell middle length 
@@ -206,7 +269,7 @@ if True:
     dR = 2 # Dwell right length
     line = [Vector(0, 0), Vector(200, 200)]
     abc0 = (0, 0, 0)
-    abc1 = (math.pi/4, 0, math.pi/4)
+    abc1 = (pi, pi, pi/2)
 
     # Calculate perimeter of arc
     P = (line[1]-line[0]).length()
@@ -217,14 +280,14 @@ if True:
     yy = np.array([0, 10, 0])
     zz = np.array([0, 0, 20])
     N = 1000 # Number of arc samples
-    for i in range(1000):
+    for i in range(N):
         d = P*i/N # Distance along line
         pt, abc = line_weave(d, L, W, dM, dL, dR, line, (abc0, abc1))
         x.append(pt.x)
         y.append(pt.y)
 
-        # Every 100th point, draw an axis
-        if i%100==0:
+        # Every 100th point, draw an ax2is
+        if i%100==0 or i==N-1:
             a, b, c = abc
             Rxx = np.matmul(rot_mat(a, b, c), xx.T)
             ax2.plot([pt.x, pt.x+Rxx[0]], [pt.y, pt.y+Rxx[1]], [0, 0+Rxx[2]], linewidth=1.0, color='r')
@@ -236,38 +299,45 @@ if True:
     # Make arc plot
     ax2.plot(x, y, linewidth=1.0)
     ax2.set(xlim=[0, 200], ylim=[0, 200], zlim=[-100, 100], adjustable='box')
+    ax2.set_title('Equler Lerp')
     ax2.set_axis_off()
 
 
 
+    ## LINE WEAVE EXAMPLE
+    # Setup plot
+    fig3 = plt.figure(3)
 
-    ## ARC WEAVE EXAMPLE
-
+    ax3 = fig3.add_subplot(111, projection='3d')
     L = 20 # Length or period of weave
     W = 5  # Width or amplitude of weave
     dM = 3 # Dwell middle length 
     dL = 2 # Dwell left length
     dR = 2 # Dwell right length
-    arc = [Vector(0, 0), Vector(0, 200), Vector(200, 200)] # 3 point arc
+    line = [Vector(0, 0), Vector(200, 200)]
     abc0 = (0, 0, 0)
-    abc1 = (math.pi/4, 0, math.pi/4)
-    abc2 = (-math.pi/2, 0, math.pi/4)
+    abc1 = (pi, pi, pi/2)
+    quat0 = euler_to_quaternion(abc0)
+    quat1 = euler_to_quaternion(abc1)
 
     # Calculate perimeter of arc
-    P = arc_perimeter(arc)
+    P = (line[1]-line[0]).length()
 
     x = []
     y = []
-
+    xx = np.array([10, 0, 0])
+    yy = np.array([0, 10, 0])
+    zz = np.array([0, 0, 20])
     N = 1000 # Number of arc samples
-    for i in range(1000):
-        d = P*i/N # Distance along arc
-        pt, abc = arc_weave(d, L, W, dM, dL, dR, arc, (abc0, abc1, abc2))
+    for i in range(N):
+        d = P*i/N # Distance along line
+        pt, quat = line_weave(d, L, W, dM, dL, dR, line, (quat0, quat1))
+        abc = quaternion_to_euler(quat)
         x.append(pt.x)
         y.append(pt.y)
 
-        # Every 100th point, draw an axis
-        if i%100==0:
+        # Every 100th point, draw an ax3is
+        if i%100==0 or i==N-1:
             a, b, c = abc
             Rxx = np.matmul(rot_mat(a, b, c), xx.T)
             ax3.plot([pt.x, pt.x+Rxx[0]], [pt.y, pt.y+Rxx[1]], [0, 0+Rxx[2]], linewidth=1.0, color='r')
@@ -278,11 +348,112 @@ if True:
 
     # Make arc plot
     ax3.plot(x, y, linewidth=1.0)
-    ax3.set(xlim=[-50, 250], ylim=[-50, 250], zlim=[-150, 150], adjustable='box')
+    ax3.set(xlim=[0, 200], ylim=[0, 200], zlim=[-100, 100], adjustable='box')
+    ax3.set_title('Quaternion Slerp')
     ax3.set_axis_off()
+        
 
 
-    # Show plot
+    ## ARC WEAVE EXAMPLE
+    # Setup plot
+    fig4 = plt.figure(4)
+
+    ax4 = fig4.add_subplot(111, projection='3d')
+    L = 20 # Length or period of weave
+    W = 5  # Width or amplitude of weave
+    dM = 3 # Dwell middle length 
+    dL = 2 # Dwell left length
+    dR = 2 # Dwell right length
+    arc = [Vector(0, 0), Vector(0, 200), Vector(200, 200)] # 3 point arc
+    abc0 = (0, 0, 0)
+    abc1 = (pi/4, pi, pi/4)
+    abc2 = (-pi/2, 0, pi/4)
+
+    # Calculate perimeter of arc
+    P = arc_perimeter(arc)
+
+    x = []
+    y = []
+
+    N = 1000 # Number of arc samples
+    for i in range(N):
+        d = P*i/N # Distance along arc
+        pt, abc = arc_weave(d, L, W, dM, dL, dR, arc, (abc0, abc1, abc2))
+        x.append(pt.x)
+        y.append(pt.y)
+
+        # Every 100th point, draw an axis
+        if i%100==0 or i==N-1:
+            a, b, c = abc
+            Rxx = np.matmul(rot_mat(a, b, c), xx.T)
+            ax4.plot([pt.x, pt.x+Rxx[0]], [pt.y, pt.y+Rxx[1]], [0, 0+Rxx[2]], linewidth=1.0, color='r')
+            Ryy = np.matmul(rot_mat(a, b, c), yy.T)
+            ax4.plot([pt.x, pt.x+Ryy[0]], [pt.y, pt.y+Ryy[1]], [0, 0+Ryy[2]], linewidth=1.0, color='g')
+            Rzz = np.matmul(rot_mat(a, b, c), zz.T)
+            ax4.plot([pt.x, pt.x+Rzz[0]], [pt.y, pt.y+Rzz[1]], [0, 0+Rzz[2]], linewidth=1.0, color='orange')
+
+    # Make arc plot
+    ax4.plot(x, y, linewidth=1.0)
+    ax4.set(xlim=[-50, 250], ylim=[-50, 250], zlim=[-150, 150], adjustable='box')
+    ax4.set_title('Equler Lerp')
+    ax4.set_axis_off()
+
+
+
+
+
+    ## ARC WEAVE EXAMPLE
+    # Setup plot
+    fig5 = plt.figure(5)
+
+    ax5 = fig5.add_subplot(111, projection='3d')
+    L = 20 # Length or period of weave
+    W = 5  # Width or amplitude of weave
+    dM = 3 # Dwell middle length 
+    dL = 2 # Dwell left length
+    dR = 2 # Dwell right length
+    arc = [Vector(0, 0), Vector(0, 200), Vector(200, 200)] # 3 point arc
+    abc0 = (0, 0, 0)
+    abc1 = (pi/4, pi, pi/4)
+    abc2 = (-pi/2, 0, pi/4)
+    quat0 = euler_to_quaternion(abc0)
+    quat1 = euler_to_quaternion(abc1)
+    quat2 = euler_to_quaternion(abc2)
+
+    # Calculate perimeter of arc
+    P = arc_perimeter(arc)
+
+    x = []
+    y = []
+
+    N = 1000 # Number of arc samples
+    for i in range(N):
+        d = P*i/N # Distance along arc
+        pt, quat = arc_weave(d, L, W, dM, dL, dR, arc, (quat0, quat1, quat2))
+        abc = quaternion_to_euler(quat)
+        x.append(pt.x)
+        y.append(pt.y)
+
+        # Every 100th point, draw an axis
+        if i%100==0 or i==N-1:
+            a, b, c = abc
+            Rxx = np.matmul(rot_mat(a, b, c), xx.T)
+            ax5.plot([pt.x, pt.x+Rxx[0]], [pt.y, pt.y+Rxx[1]], [0, 0+Rxx[2]], linewidth=1.0, color='r')
+            Ryy = np.matmul(rot_mat(a, b, c), yy.T)
+            ax5.plot([pt.x, pt.x+Ryy[0]], [pt.y, pt.y+Ryy[1]], [0, 0+Ryy[2]], linewidth=1.0, color='g')
+            Rzz = np.matmul(rot_mat(a, b, c), zz.T)
+            ax5.plot([pt.x, pt.x+Rzz[0]], [pt.y, pt.y+Rzz[1]], [0, 0+Rzz[2]], linewidth=1.0, color='orange')
+
+    # Make arc plot
+    ax5.plot(x, y, linewidth=1.0)
+    ax5.set(xlim=[-50, 250], ylim=[-50, 250], zlim=[-150, 150], adjustable='box')
+    ax5.set_title('Quaternion Slerp')
+    ax5.set_axis_off()
+
+
+
+
+    #Show plots
     plt.tight_layout()
     plt.show()
 
