@@ -175,51 +175,6 @@ def arc_clip(arc, q0, q2):
 
     return [q0.copy(), q1.copy(), q2.copy()]
 
-# # Finds the intersect of a 3 point arc and a 3 point circle
-# def arc_circ_intersect(arc, circ):
-#     p0, p1, p2 = arc
-#     ca, ra, a0, a1 = arc_from_points(arc)
-#     c, r, _, _ = arc_from_points(circ)
-
-#     p = lambda t: ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
-#     dpdt = lambda t: ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
-#     e = lambda t: r*r - Vector.dot(p(t)-c, p(t)-c)
-#     dedt = lambda t: -2*Vector.dot(dpdt(t), p(t)-c)
-                         
-#     t = newtons_method(0, e, dedt)
-    
-#     if t < 0 or t > 1:
-#         None
-#     else:
-#         return p(t)
-
-
-# # Returns first intersection point of line and circle
-# def line_circ_intersect(line, circ):
-#     p0, p1 = line
-#     c, r, a0, a1 = arc_from_points(circ)
-
-#     p = lambda t: p0+t*(p1-p0)
-#     dpdt = lambda t: p1-p0
-#     e = lambda t: r*r - Vector.dot(p(t)-c, p(t)-c)
-#     dedt = lambda t: -2*Vector.dot(dpdt(t), p(t)-c)
-                         
-#     t = newtons_method(0, e, dedt)
-
-#     if t < 0 or t > 1:
-#         None
-#     else:
-#         return p(t)
-
-# # Newton-Raphson method for finding roots of an function f with derivative df
-# # Algorithm will find only one root.
-# # x0 needs to be carefuly chosen so that alcorithm converges to correct solution
-# def newtons_method(x0, f, df):
-#     x = x0
-#     for i in range(10):
-#         x = x - f(x)/df(x)
-#     return x
-
 
 
 # Returns the first intersect of arc0 and arc1.
@@ -275,74 +230,74 @@ def arc_circ_intersect(arc, circ):
 
     return None, None
 
+# # Finds the intersect of a 3 point arc and a 3 point circle
+# def arc_circ_intersect(arc, circ):
+#     p0, p1, p2 = arc
+#     ca, ra, a0, a1 = arc_from_points(arc)
+#     c, r, _, _ = arc_from_points(circ)
 
-
-
-# This is the Non-"Functional" way to do the above
-def circ_circ_intersect(circA, circB):
-    p0, p1, p2 = circA
-    ca, ra, a0, a1 = arc_from_points(circA)
-    cb, rb, _, _ = arc_from_points(circB)
-
-    # If too far apart
-    if (ca-cb).length() > ra+rb:
-        return (None, None)
-
-    # If circle is inside arc
-    if (ca-cb).length()+rb < ra:
-        return (None, None)
-
-    # If arc is inside circle
-    if (ca-cb).length()+ra < rb:
-        return (None, None)
+#     p = lambda t: ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
+#     dpdt = lambda t: ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
+#     e = lambda t: r*r - Vector.dot(p(t)-c, p(t)-c)
+#     dedt = lambda t: -2*Vector.dot(dpdt(t), p(t)-c)
+                         
+#     t = newtons_method(0, e, dedt)
     
-    
-    t = 0.0
+#     if t < 0 or t > 1:
+#         None
+#     else:
+#         return p(t)
+
+
+# # Returns first intersection point of line and circle
+# def line_circ_intersect(line, circ):
+#     p0, p1 = line
+#     c, r, a0, a1 = arc_from_points(circ)
+
+#     p = lambda t: p0+t*(p1-p0)
+#     dpdt = lambda t: p1-p0
+#     e = lambda t: r*r - Vector.dot(p(t)-c, p(t)-c)
+#     dedt = lambda t: -2*Vector.dot(dpdt(t), p(t)-c)
+                         
+#     t = newtons_method(0, e, dedt)
+
+#     if t < 0 or t > 1:
+#         None
+#     else:
+#         return p(t)
+
+# Newton-Raphson method for finding roots of an function f with derivative df
+# Algorithm will find only one root.
+# x0 needs to be carefuly chosen so that alcorithm converges to correct solution
+def newtons_method(f, df, e):
+    x = 0
     i = 0
+    
     while i < NUM_ITER:
-
-        p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
-        dpdt =  ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
-        e =  rb*rb - Vector.dot(p-cb, p-cb) # Squared error
-        dedt =  -2*Vector.dot(dpdt, p-cb)
-
+        fx = f(x)
+        dfdx = df(x)
+        # e = math.sqrt(abs(fx))
+        err = e(x)
         # If gradient is zero
-        if dedt == 0:
+        if dfdx == 0:
             # If error is small enough . Minimum found.
-            if abs(math.sqrt(e)) < MAX_LEN_ERROR:
+            if err < MAX_LEN_ERROR:
                 break
             else:
-                # Bad starting point. 
-                t += 0.001 # nudge t a bit and continue
-                i = 0 # Reset i
+                # Bad starting point.
+                x += 0.001  # nudge t a bit and continue
+                i = 0  # Reset i
                 continue
-        t = t - e/dedt
+
+    
+
         # Break if error is small enough
-        if abs(math.sqrt(abs(e))) < MAX_LEN_ERROR:
+        if err < MAX_LEN_ERROR:
             break
-
+        x = x - fx/dfdx
         i += 1
+    return x
 
-    print('')
-    pt1 = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
-
-    pt2 = mirror_pt([ca, cb], pt1)
-
-    return (pt1, pt2)
-
-def segment_intersect(s0, s1):
-    pA = None
-    pB = None
-    if is_line(s0) and is_line(s1):
-        pA = line_segment_intersect(s0, s1)
-    elif is_line(s0) and is_arc(s1):
-        pA, pB = line_segment_arc_intersect(s0, s1)
-    elif is_arc(s0) and is_line(s1):
-        pA, pB = line_segment_arc_intersect(s1, s0)
-    elif is_arc(s0) and is_arc(s1):
-        pA,  pB= arc_arc_intersect(s0, s1)
-
-    return pA, pB
 
 
 def line_circ_intersect(line, circ):
@@ -354,32 +309,40 @@ def line_circ_intersect(line, circ):
     # if line and circ do not intersect
     if dist > r:
         return (None, None, None, None)
+
+    p = lambda t: p0+t*(p1-p0)
+    dp = lambda t: p1-p0
+    f = lambda t: r*r - Vector.dot(p(t)-c, p(t)-c)
+    df = lambda t: -2*Vector.dot(dp(t), p(t)-c)
+    e = lambda t: math.sqrt(abs(f(t)))
+                         
+    t = newtons_method(f, df, e)
     
-    t = 0.0
-    i = 0
-    while i < NUM_ITER:
+    # t = 0.0
+    # i = 0
+    # while i < NUM_ITER:
 
-        p = p0+t*(p1-p0)
-        dpdt = p1-p0
-        e = r*r - Vector.dot(p-c, p-c)
-        dedt = -2*Vector.dot(dpdt, p-c)
+    #     p = p0+t*(p1-p0)
+    #     dpdt = p1-p0
+    #     e = r*r - Vector.dot(p-c, p-c)
+    #     dedt = -2*Vector.dot(dpdt, p-c)
         
-        # If gradient is zero
-        if dedt == 0:
-            # If error is small enough . Minimum found.
-            if abs(math.sqrt(e)) < MAX_LEN_ERROR:
-                break
-            else:
-                # Bad starting point.
-                t += 0.001 # nudge t a bit and continue
-                i = 0 # Reset i
-                continue
-        t = t - e/dedt
-        # Break if error is small enough
-        if abs(math.sqrt(abs(e))) < MAX_LEN_ERROR:
-            break
+    #     # If gradient is zero
+    #     if dedt == 0:
+    #         # If error is small enough . Minimum found.
+    #         if math.sqrt(abs(e)) < MAX_LEN_ERROR:
+    #             break
+    #         else:
+    #             # Bad starting point.
+    #             t += 0.001 # nudge t a bit and continue
+    #             i = 0 # Reset i
+    #             continue
+    #     t = t - e/dedt
+    #     # Break if error is small enough
+    #     if math.sqrt(abs(e)) < MAX_LEN_ERROR:
+    #         break
 
-        i += 1
+    #     i += 1
 
 
     tA = t
@@ -407,6 +370,81 @@ def line_circ_intersect(line, circ):
         return (pA, tA, pB, tB)
     else:
         return (pB, tB, pA, tA)
+
+
+
+# This is the Non-"Functional" way to do the above
+def circ_circ_intersect(circA, circB):
+    p0, p1, p2 = circA
+    ca, ra, a0, a1 = arc_from_points(circA)
+    cb, rb, _, _ = arc_from_points(circB)
+
+    # If too far apart
+    if (ca-cb).length() > ra+rb:
+        return (None, None)
+
+    # If circle is inside arc
+    if (ca-cb).length()+rb < ra:
+        return (None, None)
+
+    # If arc is inside circle
+    if (ca-cb).length()+ra < rb:
+        return (None, None)
+
+    p = lambda t: ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
+    dp = lambda t: ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
+    f = lambda t: r*r - Vector.dot(p(t)-c, p(t)-c)
+    df = lambda t: -2*Vector.dot(dp(t), p(t)-c)
+    e = lambda t: math.sqrt(abs(f(t)))
+
+    t = newtons_method(f, df, e)
+    
+    # t = 0.0
+    # i = 0
+    # while i < NUM_ITER:
+
+    #     p = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
+    #     dpdt =  ra*(a1-a0)*Vector(-math.sin(a0+t*(a1-a0)), math.cos(a0+t*(a1-a0)))
+    #     e =  rb*rb - Vector.dot(p-cb, p-cb) # Squared error
+    #     dedt =  -2*Vector.dot(dpdt, p-cb)
+
+    #     # If gradient is zero
+    #     if dedt == 0:
+    #         # If error is small enough . Minimum found.
+    #         if math.sqrt(abs(e)) < MAX_LEN_ERROR:
+    #             break
+    #         else:
+    #             # Bad starting point. 
+    #             t += 0.001 # nudge t a bit and continue
+    #             i = 0 # Reset i
+    #             continue
+    #     t = t - e/dedt
+    #     # Break if error is small enough
+    #     if math.sqrt(abs(e)) < MAX_LEN_ERROR:
+    #         break
+
+    #     i += 1
+
+    pt1 = ca + ra*Vector(math.cos(a0+t*(a1-a0)), math.sin(a0+t*(a1-a0)))
+    pt2 = mirror_pt([ca, cb], pt1)
+
+    return (pt1, pt2)
+
+def segment_intersect(s0, s1):
+    pA = None
+    pB = None
+    if is_line(s0) and is_line(s1):
+        pA = line_segment_intersect(s0, s1)
+    elif is_line(s0) and is_arc(s1):
+        pA, pB = line_segment_arc_intersect(s0, s1)
+    elif is_arc(s0) and is_line(s1):
+        pA, pB = line_segment_arc_intersect(s1, s0)
+    elif is_arc(s0) and is_arc(s1):
+        pA,  pB= arc_arc_intersect(s0, s1)
+
+    return pA, pB
+
+
 
 
 # Returns the first intersect of line and arc.
